@@ -1,6 +1,10 @@
 from pathlib import Path
 from typing import Dict
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import JSONResponse
 
