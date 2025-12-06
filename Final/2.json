@@ -1,74 +1,117 @@
 {
   "student_id": "2",
   "name": "Smith Jane",
-  "grade": "D",
-  "summary_feedback": "Your writing clearly tells a short story, but there are many grammar and spelling mistakes that make it informal and incorrect for academic work. Focus on correct verb tenses, standard spelling, and proper capitalization of 'I' and sentence beginnings. Try breaking long run-on sentences into shorter, properly punctuated ones.",
+  "grade": "F",
+  "summary_feedback": "You did not follow the task instructions: the text was not rewritten into correct, clear, formal English and still contains serious grammar, spelling, and register errors. The answer also includes long strings of random characters that break meaning and coherence. You must fully replace the original passage with a polished, meaningful version of approximately the same length.",
   "issues": [
     {
       "type": "grammar",
+      "quote": "yesturday i was going to the shop",
+      "comment": "Incorrect spelling and capitalization; past continuous is inappropriate for a simple past narrative point",
+      "correction": "Yesterday I went to the shop"
+    },
+    {
+      "type": "grammar",
       "quote": "yesturday",
-      "comment": "Incorrect spelling of the word.",
-      "correction": "yesterday"
+      "comment": "Incorrect spelling of the word",
+      "correction": "Yesterday"
     },
     {
       "type": "grammar",
       "quote": "i",
-      "comment": "Pronoun 'I' must be capitalized.",
+      "comment": "Pronoun referring to oneself must be capitalized",
       "correction": "I"
     },
     {
       "type": "grammar",
-      "quote": "i dont wanted to walk",
-      "comment": "Incorrect negative and verb tense combination.",
-      "correction": "I didn't want to walk"
+      "quote": "but then the rain was like super heavy",
+      "comment": "Use of informal filler word and slang; lacks formal register",
+      "correction": "but then the rain became very heavy"
+    },
+    {
+      "type": "vocabulary",
+      "quote": "like super heavy",
+      "comment": "Informal, conversational expression not appropriate for formal English",
+      "correction": "extremely heavy"
     },
     {
       "type": "grammar",
-      "quote": "my friend sayed",
-      "comment": "Incorrect past tense form of the verb 'say'.",
-      "correction": "my friend said"
+      "quote": "so i dont wanted to walk anymore",
+      "comment": "Incorrect auxiliary and verb form; contraction form is wrong and pronoun not capitalized",
+      "correction": "so I did not want to walk anymore"
+    },
+    {
+      "type": "grammar",
+      "quote": "dont",
+      "comment": "Missing apostrophe in the contraction",
+      "correction": "don't"
+    },
+    {
+      "type": "grammar",
+      "quote": "my friend sayed its fine",
+      "comment": "Incorrect past tense of the verb and missing apostrophe in the contraction",
+      "correction": "my friend said it's fine"
+    },
+    {
+      "type": "grammar",
+      "quote": "its fine",
+      "comment": "Missing apostrophe in the contraction of 'it is'",
+      "correction": "it's fine"
     },
     {
       "type": "grammar",
       "quote": "and we go anyways.",
-      "comment": "Incorrect verb tense; should be past tense.",
+      "comment": "Incorrect verb tense and informal adverb; should use simple past and a more formal adverb",
       "correction": "and we went anyway."
+    },
+    {
+      "type": "vocabulary",
+      "quote": "anyways",
+      "comment": "Nonstandard informal form",
+      "correction": "anyway"
     },
     {
       "type": "grammar",
       "quote": "the street was slippy",
-      "comment": "Incorrect or nonstandard adjective form.",
+      "comment": "Incorrect adjective form",
       "correction": "the street was slippery"
     },
     {
       "type": "grammar",
       "quote": "we almost falled",
-      "comment": "Incorrect past tense form of the verb 'fall'.",
+      "comment": "Incorrect past tense form of the verb",
       "correction": "we almost fell"
     },
     {
       "type": "grammar",
-      "quote": "tho.",
-      "comment": "Informal contraction inappropriate for formal writing.",
-      "correction": "though."
+      "quote": "but it asdjhasldbwalhduial adjh lhjksd hjll kjhghlasdfjöjahöou höaohoaveöoh feeö foaög ö bwas kinda funny tho.",
+      "comment": "Contains random, unintelligible letter sequences, misspelling, informal vocabulary, and an incorrect verb form",
+      "correction": "but it was still rather amusing."
     },
     {
-      "type": "grammar",
-      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore",
-      "comment": "Run-on sentence lacking appropriate punctuation.",
-      "correction": "Yesterday I was going to the shop, but then the rain was very heavy, so I didn't want to walk anymore"
+      "type": "vocabulary",
+      "quote": "bwas kinda funny tho.",
+      "comment": "Misspelling, informal word choice, and slang abbreviation",
+      "correction": "was quite funny though."
     },
     {
-      "type": "grammar",
-      "quote": "but my friend sayed its fine and we go anyways.",
-      "comment": "Missing apostrophe in 'it's' and incorrect tense sequence.",
-      "correction": "but my friend said it's fine and we went anyway."
+      "type": "structure",
+      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
+      "comment": "Overlong run-on sentence with multiple clauses joined only by 'but' and 'so'",
+      "correction": "Yesterday I went to the shop, but the rain became very heavy, so I did not want to walk anymore; however, my friend said it was fine, and we went anyway."
     },
     {
-      "type": "grammar",
-      "quote": "yesturday",
-      "comment": "Sentence should begin with a capital letter.",
-      "correction": "Yesterday"
+      "type": "content",
+      "quote": "asdjhasldbwalhduial adjh lhjksd hjll kjhghlasdfjöjahöou höaohoaveöoh feeö foaög ö",
+      "comment": "Nonsensical sequence of characters that does not convey meaningful content",
+      "correction": ""
+    },
+    {
+      "type": "coherence",
+      "quote": "asdjhasldbwalhduial adjh lhjksd hjll kjhghlasdfjöjahöou höaohoaveöoh feeö foaög ö bwas kinda funny tho.",
+      "comment": "The presence of random characters interrupts the narrative and breaks coherence",
+      "correction": "which made the situation quite amusing."
     }
-  ]
+  ],
+  "assignment_task": "Assignment Task\n\nYou are given a short text that contains multiple spelling mistakes, grammar errors, and unclear expressions.\nYour task is to rewrite the text into correct, clear, and formal English.\nMake sure to:\n\nFix all grammatical and spelling errors\n\nImprove clarity and sentence structure\n\nKeep the original meaning\n\nMaintain approximately the same length\n\nUse the provided passage as your source material."
 }

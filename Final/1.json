@@ -1,104 +1,116 @@
 {
   "student_id": "1",
   "name": "Surname Lastname",
-  "grade": "D",
-  "summary_feedback": "You included the main ideas from the original passage, but you did not rewrite them in correct, formal English. There are numerous spelling, grammar, and punctuation errors, and the tone remains too informal. Carefully apply the suggested corrections and divide long sentences to improve clarity and accuracy.",
+  "grade": "C",
+  "summary_feedback": "Your response keeps the original meaning, but it contains many spelling, grammar, and formality errorTESTESTESTs. You did not follow the instruction to use correct, clear, and formal English. Revise by correcting tense, capitalization, and informal vocabulary, and by breaking the long run-on sentence into clearer sentences.",
   "issues": [
     {
       "type": "grammar",
+      "quote": "yesturday i",
+      "comment": "Incorrect spelling of the adverb and incorrect capitalization of the pronoun.",
+      "correction": "Yesterday I"
+    },
+    {
+      "type": "grammar",
       "quote": "yesturday",
-      "comment": "Incorrect spelling of the adverb of time",
+      "comment": "Misspelling of the word.",
       "correction": "Yesterday"
     },
     {
       "type": "grammar",
       "quote": "i was going",
-      "comment": "Pronoun should be capitalized",
+      "comment": "Incorrect capitalization of the pronoun.",
       "correction": "I was going"
+    },
+    {
+      "type": "vocabulary",
+      "quote": "the rain was like super heavy",
+      "comment": "Use of informal filler word and slang adverb in a formal context.",
+      "correction": "the rain was very heavy"
     },
     {
       "type": "grammar",
       "quote": "i dont wanted",
-      "comment": "Pronoun capitalization and incorrect tense/auxiliary combination",
+      "comment": "Incorrect auxiliary and verb form; also incorrect capitalization of the pronoun.",
       "correction": "I did not want"
     },
     {
       "type": "grammar",
       "quote": "i dont",
-      "comment": "Missing apostrophe in the contraction and pronoun capitalization",
+      "comment": "Incorrect capitalization of the pronoun.",
       "correction": "I don't"
     },
     {
       "type": "grammar",
+      "quote": "dont",
+      "comment": "Missing apostrophe in the contraction.",
+      "correction": "don't"
+    },
+    {
+      "type": "grammar",
       "quote": "my friend sayed",
-      "comment": "Incorrect past tense form of the verb",
+      "comment": "Incorrect past tense form of the verb.",
       "correction": "my friend said"
     },
     {
       "type": "grammar",
-      "quote": "and we go anyways.",
-      "comment": "Incorrect verb tense",
-      "correction": "and we went anyway."
-    },
-    {
-      "type": "grammar",
-      "quote": "anyways",
-      "comment": "Non-standard form in formal writing",
-      "correction": "anyway"
+      "quote": "we go anyways",
+      "comment": "Incorrect verb tense and use of informal adverb.",
+      "correction": "we went anyway"
     },
     {
       "type": "grammar",
       "quote": "the street was slippy",
-      "comment": "Incorrect adjective form",
+      "comment": "Use of a nonstandard adjective form.",
       "correction": "the street was slippery"
     },
     {
       "type": "grammar",
       "quote": "we almost falled",
-      "comment": "Incorrect past tense form of the verb",
+      "comment": "Incorrect past tense form of the verb.",
       "correction": "we almost fell"
     },
     {
-      "type": "grammar",
-      "quote": "tho.",
-      "comment": "Non-standard informal abbreviation",
-      "correction": "though."
+      "type": "vocabulary",
+      "quote": "kinda",
+      "comment": "Informal contraction not suitable for formal writing.",
+      "correction": "somewhat"
+    },
+    {
+      "type": "vocabulary",
+      "quote": "tho",
+      "comment": "Informal spelling not suitable for formal writing.",
+      "correction": "though"
     },
     {
       "type": "grammar",
       "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
-      "comment": "Run-on sentence lacking proper punctuation and sentence division",
-      "correction": "Yesterday I was going to the shop, but then the rain was very heavy, so I did not want to walk anymore, but my friend said it was fine and we went anyway."
+      "comment": "Run-on sentence lacking appropriate punctuation to separate ideas.",
+      "correction": "Yesterday I was going to the shop, but the rain was very heavy, so I did not want to walk anymore, but my friend said it was fine and we went anyway."
     },
     {
       "type": "grammar",
       "quote": "its fine",
-      "comment": "Missing apostrophe in the contraction",
+      "comment": "Missing apostrophe in the contraction.",
       "correction": "it's fine"
     },
     {
-      "type": "vocabulary",
-      "quote": "like super heavy",
-      "comment": "Overly informal expression for formal writing",
-      "correction": "very heavy"
-    },
-    {
-      "type": "vocabulary",
-      "quote": "kinda funny tho.",
-      "comment": "Overly informal vocabulary for formal writing",
-      "correction": "rather funny, though."
+      "type": "grammar",
+      "quote": "it was kinda funny tho.",
+      "comment": "Informal expressions and lack of formality in tone.",
+      "correction": "it was somewhat funny, though."
     },
     {
       "type": "structure",
       "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
-      "comment": "Multiple clauses joined with only coordinating conjunctions; needs clearer sentence boundaries",
-      "correction": "Yesterday I was going to the shop, but the rain became very heavy, so I did not want to walk anymore. However, my friend said it was fine and we went anyway."
+      "comment": "Sentence is overly long with multiple clauses joined only by conjunctions, reducing clarity.",
+      "correction": "Yesterday I was going to the shop, but the rain became very heavy. I did not want to walk anymore, but my friend said it was fine and we went anyway."
     },
     {
-      "type": "grammar",
-      "quote": "the street was slippy and we almost falled but it was kinda funny tho.",
-      "comment": "Needs comma before coordinating conjunction and has incorrect verb form and informal expression",
-      "correction": "The street was slippery, and we almost fell, but it was rather funny, though."
+      "type": "content",
+      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways. the street was slippy and we almost falled but it was kinda funny tho.",
+      "comment": "The response does not follow the instruction to use correct, clear, and formal English.",
+      "correction": "Yesterday I was going to the shop, but the rain became very heavy, so I did not want to walk anymore. However, my friend said it was fine and we went anyway. The street was slippery and we almost fell, but it was still somewhat funny."
     }
   ],
   "assignment_task": "Assignment Task\n\nYou are given a short text that contains multiple spelling mistakes, grammar errors, and unclear expressions.\nYour task is to rewrite the text into correct, clear, and formal English.\nMake sure to:\n\nFix all grammatical and spelling errors\n\nImprove clarity and sentence structure\n\nKeep the original meaning\n\nMaintain approximately the same length\n\nUse the provided passage as your source material."
