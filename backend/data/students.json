@@ -1,17 +1,12 @@
 [
   {
     "id": "1",
-    "first_name": "John",
-    "last_name": "Doe"
+    "surname": "Doe",
+    "lastname": "John"
   },
   {
     "id": "2",
-    "first_name": "Jane",
-    "last_name": "Smith"
-  },
-  {
-    "id": "3",
-    "first_name": "Emily",
-    "last_name": "Wong"
+    "surname": "Smith",
+    "lastname": "Jane"
   }
 ]
