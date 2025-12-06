@@ -1,0 +1,70 @@
+Nice, that’s a clean split 👍
+
+Given OCR outputs:
+
+```python
+ocr_results = [
+    (id1, "…ocr text…"),
+    (id2, "…ocr text…"),
+]
+```
+
+the **LLM part** should do exactly this:
+
+1. **Take OCR text + metadata**
+
+   * For each `(id, ocr_text)`:
+
+     * (Optionally) look up student name & assignment title from `students.json` or another mapping.
+
+2. **Build a grading prompt**
+
+   * Insert into a fixed template with:
+
+     * rubric / grading instructions
+     * essay text
+     * (optional) student name, level, etc.
+
+3. **Call OpenAI (via LangChain or raw SDK)**
+
+   * Send the prompt to the LLM.
+   * Ask it to return **strict JSON** with e.g.:
+
+     ```json
+     {
+       "grade": "B+",
+       "feedback": "Your essay shows good structure but ..."
+     }
+     ```
+
+4. **Parse and validate the LLM output**
+
+   * Make sure JSON parses.
+   * Ensure both fields `grade` and `feedback` are present.
+   * If parsing fails → log an error / fallback.
+
+5. **Produce structured results per student**
+
+   * Final Python structure after LLM step:
+
+     ```python
+     llm_results = [
+         (id1, grade1, feedback1),
+         (id2, grade2, feedback2),
+         # ...
+     ]
+     ```
+   * Or as dicts:
+
+     ```python
+     {"id": id1, "grade": grade1, "feedback_llm": feedback1}
+     ```
+
+6. **Keep it ready for teacher editing**
+
+   * Store both:
+
+     * `feedback_llm` (raw from model)
+     * `feedback_final` (initially same as `feedback_llm`, later edited by teacher)
+
+That’s it: **OCR → LLM grading+feedback → clean structured list/dicts ready for the frontend + JSON export.**
