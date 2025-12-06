@@ -92,42 +92,38 @@ async def create_submission(
 
 
 @app.patch("/feedback/{student_id}")
-async def update_feedback(student_id: str, edited: Dict):
+async def update_feedback(
+    student_id: str,
+    payload: Dict = Body(..., description="Optional keys: grade, summary_feedback, issues"),
+):
     """
-    UPDATE:
-    - Teacher sends edited feedback JSON for a given student_id.
-    - JSON must at least contain 'grade' and 'summary_feedback'.
-    - We overwrite Final/{student_id}.json with this edited JSON.
+    Update stored feedback for a student.
+    Accepts optional keys:
+      - grade (str)
+      - summary_feedback (str)
+      - issues (list[dict])  # full replacement
     """
-    required_keys = {"grade", "summary_feedback"}
-    missing = required_keys - set(edited.keys())
-    if missing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Missing required keys in edited feedback: {missing}",
-        )
-
     final_path = _final_json_path(student_id)
     if not final_path.exists():
-        raise HTTPException(status_code=404, detail="No existing result for this student_id.")
+        raise HTTPException(status_code=404, detail="No feedback stored for this student.")
 
-    # Load old JSON (so we can keep any extra fields if desired)
     import json
-    try:
-        existing = json.loads(final_path.read_text(encoding="utf-8"))
-    except Exception:
-        existing = {}
 
-    # Merge existing with edited; edited values win
-    merged = dict(existing)
-    merged.update(edited)
+    data = json.loads(final_path.read_text(encoding="utf-8"))
 
-    final_path.write_text(
-        json.dumps(merged, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    grade = payload.get("grade")
+    summary = payload.get("summary_feedback")
+    issues = payload.get("issues")
 
-    return {"status": "updated", "student_id": student_id}
+    if grade is not None:
+        data["grade"] = grade
+    if summary is not None:
+        data["summary_feedback"] = summary
+    if issues is not None:
+        data["issues"] = issues
+
+    final_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return JSONResponse(content=data)
 
 
 @app.get("/results/{student_id}")

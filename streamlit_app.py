@@ -69,10 +69,16 @@ def fetch_result(student_id: str):
     return resp.json()
 
 
-def save_feedback(student_id: str, grade: str, summary_feedback: str) -> dict:
+def save_feedback(
+    student_id: str,
+    grade: str,
+    summary_feedback: str,
+    issues: List[Dict[str, Any]],
+) -> dict:
     payload = {
         "grade": grade,
         "summary_feedback": summary_feedback,
+        "issues": issues,
     }
     resp = requests.patch(f"{API_BASE}/feedback/{student_id}", json=payload, timeout=10)
     if resp.status_code != 200:
@@ -234,20 +240,54 @@ if current_result:
         value=st.session_state.get(summary_key, current_result.get("summary_feedback", "")),
     )
 
-    st.markdown("### Detected issues (read-only)")
+    st.markdown("### Detected issues (editable)")
     issues = current_result.get("issues", []) or []
+    editable_issues_keys: List[str] = []
+
     if not issues:
-        st.write("No issues detected or issues missing in result.")
+        st.info("No issues detected yet. You can still adjust grade and summary.")
     else:
         for idx, issue in enumerate(issues, start=1):
             issue_type = issue.get("type", "issue")
             quote = issue.get("quote", "")
             comment = issue.get("comment", "")
             correction = issue.get("correction", "")
-            with st.expander(f"Issue {idx}: {issue_type.capitalize()}"):
-                st.write(f"**Quote:** {quote}")
-                st.write(f"**Comment:** {comment}")
-                st.write(f"**Correction:** {correction}")
+            base_key = f"issue_{selected_id}_{idx}"
+
+            st.session_state.setdefault(f"{base_key}_type", str(issue_type))
+            st.session_state.setdefault(f"{base_key}_quote", str(quote))
+            st.session_state.setdefault(f"{base_key}_comment", str(comment))
+            st.session_state.setdefault(f"{base_key}_correction", str(correction))
+            st.session_state.setdefault(f"{base_key}_delete", False)
+
+            editable_issues_keys.append(base_key)
+
+            header = f"Issue {idx}: {st.session_state.get(f'{base_key}_type', '') or 'Unspecified'}"
+
+            with st.expander(header, expanded=False):
+                st.text_input(
+                    "Type (e.g. Grammar, Vocabulary, Content, Structure)",
+                    key=f"{base_key}_type",
+                )
+                st.text_area(
+                    "Quote",
+                    key=f"{base_key}_quote",
+                    height=80,
+                )
+                st.text_area(
+                    "Comment",
+                    key=f"{base_key}_comment",
+                    height=80,
+                )
+                st.text_area(
+                    "Suggested correction",
+                    key=f"{base_key}_correction",
+                    height=80,
+                )
+                st.checkbox(
+                    "Delete this issue",
+                    key=f"{base_key}_delete",
+                )
 
     if st.button("Save edited feedback"):
         cleaned_grade = (grade_value or "").strip()
@@ -256,12 +296,26 @@ if current_result:
         if not cleaned_grade or not cleaned_summary:
             st.warning("Grade and summary feedback must not be empty.")
         else:
+            updated_issues: List[Dict[str, Any]] = []
+            for base_key in editable_issues_keys:
+                if st.session_state.get(f"{base_key}_delete", False):
+                    continue
+                updated_issues.append(
+                    {
+                        "type": st.session_state.get(f"{base_key}_type", "").strip(),
+                        "quote": st.session_state.get(f"{base_key}_quote", "").strip(),
+                        "comment": st.session_state.get(f"{base_key}_comment", "").strip(),
+                        "correction": st.session_state.get(f"{base_key}_correction", "").strip(),
+                    }
+                )
+
             try:
                 with st.spinner("Saving edited feedback..."):
-                    resp = save_feedback(selected_id, cleaned_grade, cleaned_summary)
+                    resp = save_feedback(selected_id, cleaned_grade, cleaned_summary, updated_issues)
                 current_result["grade"] = cleaned_grade
                 current_result["summary_feedback"] = cleaned_summary
+                current_result["issues"] = updated_issues
                 st.session_state["results"][selected_id] = current_result
-                st.success("Feedback saved successfully.")
+                st.success("Feedback and issues saved successfully.")
             except Exception as exc:
                 st.error(f"Failed to save feedback: {exc}")
