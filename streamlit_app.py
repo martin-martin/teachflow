@@ -20,9 +20,12 @@ def fetch_students():
         return []
 
 
-def submit_essay(student_id: str, essay_text: str):
-    """Send essay text to backend and return the grading JSON."""
+def submit_essay(student_id: str, essay_text: str, assignment_task: str | None = None):
+    """Send essay text (and optional assignment task) to backend and return the grading JSON."""
     payload = {"essay_text": essay_text}
+    if assignment_task:
+        payload["assignment_task"] = assignment_task
+
     resp = requests.post(
         f"{API_BASE}/submissions/{student_id}",
         json=payload,
@@ -79,6 +82,14 @@ st.sidebar.markdown("---")
 load_existing = st.sidebar.button("Load last saved result")
 
 # Main area: essay input + actions
+st.subheader("0. Assignment task (what was the homework?)")
+
+assignment_task = st.text_area(
+    "Assignment task / question (optional)",
+    value="Paste the original homework prompt here so the AI can grade relative to it.",
+    height=120,
+)
+
 st.subheader("1. Paste the student's essay")
 
 default_placeholder = (
@@ -124,7 +135,11 @@ elif grade_btn:
     else:
         with st.spinner("Calling backend /submissions and grading essay..."):
             try:
-                result = submit_essay(selected_id, cleaned)
+                result = submit_essay(
+                    selected_id,
+                    cleaned,
+                    assignment_task.strip() or None,
+                )
             except Exception as e:
                 st.error(e)
             else:

@@ -2,73 +2,104 @@
   "student_id": "1",
   "name": "Surname Lastname",
   "grade": "D",
-  "summary_feedback": "Your paragraph contains multiple basic grammar, spelling, and tense errors that make the writing informal and unclear. Pay attention to correct verb forms, standard spelling, and capitalization of \"I.\" Try to break long run-on sentences into shorter, correctly punctuated ones for better structure.",
+  "summary_feedback": "You included the main ideas from the original passage, but you did not rewrite them in correct, formal English. There are numerous spelling, grammar, and punctuation errors, and the tone remains too informal. Carefully apply the suggested corrections and divide long sentences to improve clarity and accuracy.",
   "issues": [
     {
       "type": "grammar",
       "quote": "yesturday",
-      "comment": "Incorrect spelling of the word.",
-      "correction": "yesterday"
+      "comment": "Incorrect spelling of the adverb of time",
+      "correction": "Yesterday"
     },
     {
       "type": "grammar",
-      "quote": "i",
-      "comment": "Pronoun 'I' must be capitalized.",
-      "correction": "I"
+      "quote": "i was going",
+      "comment": "Pronoun should be capitalized",
+      "correction": "I was going"
     },
     {
       "type": "grammar",
-      "quote": "was going to the shop",
-      "comment": "Past progressive is awkward here; simple past is more appropriate.",
-      "correction": "went to the shop"
+      "quote": "i dont wanted",
+      "comment": "Pronoun capitalization and incorrect tense/auxiliary combination",
+      "correction": "I did not want"
     },
     {
       "type": "grammar",
-      "quote": "i dont wanted to walk anymore",
-      "comment": "Incorrect negation and verb tense; use past simple with 'did not'.",
-      "correction": "I did not want to walk anymore"
+      "quote": "i dont",
+      "comment": "Missing apostrophe in the contraction and pronoun capitalization",
+      "correction": "I don't"
     },
     {
       "type": "grammar",
       "quote": "my friend sayed",
-      "comment": "Incorrect past tense of the verb 'say'.",
+      "comment": "Incorrect past tense form of the verb",
       "correction": "my friend said"
     },
     {
       "type": "grammar",
-      "quote": "its fine",
-      "comment": "Missing apostrophe in the contraction.",
-      "correction": "it's fine"
+      "quote": "and we go anyways.",
+      "comment": "Incorrect verb tense",
+      "correction": "and we went anyway."
     },
     {
       "type": "grammar",
-      "quote": "we go anyways",
-      "comment": "Incorrect verb tense; past simple is needed.",
-      "correction": "we went anyway"
+      "quote": "anyways",
+      "comment": "Non-standard form in formal writing",
+      "correction": "anyway"
     },
     {
       "type": "grammar",
-      "quote": "slippy",
-      "comment": "Nonstandard adjective form; 'slippery' is correct.",
-      "correction": "slippery"
+      "quote": "the street was slippy",
+      "comment": "Incorrect adjective form",
+      "correction": "the street was slippery"
     },
     {
       "type": "grammar",
       "quote": "we almost falled",
-      "comment": "Incorrect past tense of the verb 'fall'.",
+      "comment": "Incorrect past tense form of the verb",
       "correction": "we almost fell"
     },
     {
       "type": "grammar",
-      "quote": "tho",
-      "comment": "Informal slang; use the full adverb in formal writing.",
-      "correction": "though"
+      "quote": "tho.",
+      "comment": "Non-standard informal abbreviation",
+      "correction": "though."
+    },
+    {
+      "type": "grammar",
+      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
+      "comment": "Run-on sentence lacking proper punctuation and sentence division",
+      "correction": "Yesterday I was going to the shop, but then the rain was very heavy, so I did not want to walk anymore, but my friend said it was fine and we went anyway."
+    },
+    {
+      "type": "grammar",
+      "quote": "its fine",
+      "comment": "Missing apostrophe in the contraction",
+      "correction": "it's fine"
+    },
+    {
+      "type": "vocabulary",
+      "quote": "like super heavy",
+      "comment": "Overly informal expression for formal writing",
+      "correction": "very heavy"
+    },
+    {
+      "type": "vocabulary",
+      "quote": "kinda funny tho.",
+      "comment": "Overly informal vocabulary for formal writing",
+      "correction": "rather funny, though."
     },
     {
       "type": "structure",
       "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
-      "comment": "Run-on sentence with multiple clauses joined only by 'but' and 'so'.",
-      "correction": "Yesterday I went to the shop, but then the rain was very heavy, so I did not want to walk anymore. However, my friend said it's fine, and we went anyway."
+      "comment": "Multiple clauses joined with only coordinating conjunctions; needs clearer sentence boundaries",
+      "correction": "Yesterday I was going to the shop, but the rain became very heavy, so I did not want to walk anymore. However, my friend said it was fine and we went anyway."
+    },
+    {
+      "type": "grammar",
+      "quote": "the street was slippy and we almost falled but it was kinda funny tho.",
+      "comment": "Needs comma before coordinating conjunction and has incorrect verb form and informal expression",
+      "correction": "The street was slippery, and we almost fell, but it was rather funny, though."
     }
-  ]
+  ],
+  "assignment_task": "Assignment Task\n\nYou are given a short text that contains multiple spelling mistakes, grammar errors, and unclear expressions.\nYour task is to rewrite the text into correct, clear, and formal English.\nMake sure to:\n\nFix all grammatical and spelling errors\n\nImprove clarity and sentence structure\n\nKeep the original meaning\n\nMaintain approximately the same length\n\nUse the provided passage as your source material."
 }
