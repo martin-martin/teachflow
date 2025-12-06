@@ -15,18 +15,18 @@ from .llm_pipeline import grade_single_student_essay
 BASE_DIR = Path(__file__).resolve().parent          # teachflow/backend
 PROJECT_ROOT = BASE_DIR.parent                      # teachflow/
 INPUT_DIR = PROJECT_ROOT / "Input"
-FINAL_DIR = PROJECT_ROOT / "Final"
+DB_MOCKUP_DIR = PROJECT_ROOT / "db_mockup"
 
 # Make sure folders exist
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
-FINAL_DIR.mkdir(parents=True, exist_ok=True)
+DB_MOCKUP_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="TeachFlow MVP API", version="0.1.0")
 
 
 def _final_json_path(student_id: str) -> Path:
     """Helper: path to the final JSON for a student."""
-    return FINAL_DIR / f"{student_id}.json"
+    return DB_MOCKUP_DIR / f"{student_id}.json"
 
 
 @app.post("/submissions/{student_id}")
@@ -44,7 +44,7 @@ async def create_submission(
         }
     - Text is stored (id, text) for this session if you use an in-memory store.
     - LLM grading is performed on a combined "task + answer" string.
-    - Final JSON is saved into teachflow/Final/{student_id}.json.
+    - Final JSON is saved into teachflow/db_mockup/{student_id}.json.
     - Final JSON (including assignment_task) is returned in the response.
     """
     essay_text = payload.get("essay_text")
@@ -82,7 +82,7 @@ async def create_submission(
     # Store the (raw) assignment task in the result JSON for traceability
     result_json["assignment_task"] = assignment_task.strip()
 
-    # Save final JSON to Final/{student_id}.json
+    # Save final JSON to db_mockup/{student_id}.json
     final_path = _final_json_path(student_id)
     final_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +135,7 @@ async def get_result(student_id: str):
     """
     GET:
     - Returns the final saved JSON for a given student_id.
-    - Reads from Final/{student_id}.json.
+    - Reads from db_mockup/{student_id}.json.
     """
     final_path = _final_json_path(student_id)
     if not final_path.exists():

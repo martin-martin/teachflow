@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 INPUT_DIR = PROJECT_ROOT / "Input"
 OUTPUT_DIR = PROJECT_ROOT / "Output"
-RESULTS_DIR = PROJECT_ROOT / "Final"
+DB_MOCKUP_DIR = PROJECT_ROOT / "db_mockup"
 
 
 def _render_template(template: str, context: Dict[str, str]) -> str:
@@ -269,9 +269,9 @@ def build_students_map_from_cfg() -> Dict[str, dict]:
 def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str, dict]) -> None:
     """
     Execute the LLM grading pipeline over a list of (student_id, ocr_text).
-    Saves raw outputs to Output/, waits for manual edits in Input/, then saves final JSONs to backend/results/.
+    Saves raw outputs to Output/, waits for manual edits in Input/, then saves final JSONs to db_mockup/.
     """
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    DB_MOCKUP_DIR.mkdir(parents=True, exist_ok=True)
     # Ensure all student IDs in students_map are strings
     students_map = {str(k): v for k, v in students_map.items()}
     grader = LLMGrader()
@@ -341,7 +341,7 @@ def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str
         edited["grade"] = str(edited.get("grade", "")).strip()
         edited["summary_feedback"] = str(edited.get("summary_feedback", "")).strip()
 
-        results_path = RESULTS_DIR / f"{student_id}.final.json"
+        results_path = DB_MOCKUP_DIR / f"{student_id}.final.json"
         save_json(results_path, edited)
         print(f"Final JSON saved to {results_path}")
 
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     - Uses cfg.STUDENTS to resolve student metadata.
     - Runs the full LLM pipeline and writes:
         - Output/{id}.json
-        - Final/{id}.final.json (after manual edit step).
+        - db_mockup/{id}.final.json (after manual edit step).
     """
     raw_ocr_list = [(str(sid), str(text)) for sid, text in cfg.DEMO_ESSAY_PAIRS]
     students_map = build_students_map_from_cfg()

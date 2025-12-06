@@ -1,5 +1,10 @@
+# Secrets
 .env
 backend/.env
+
+# Database mockup
+db_mockup/
+
 # Logs
 logs
 *.log
