@@ -1,0 +1,26 @@
+{
+  "student_id": "1",
+  "name": "Doe John",
+  "grade": "D",
+  "summary_feedback": "Your sentence has several grammatical and word order mistakes that make the meaning unclear. Focus on correct capitalization, verb choice, and proper question structure. Revise to something like: \"Hello, is today beautiful?\"",
+  "issues": [
+    {
+      "type": "grammar",
+      "quote": "hello",
+      "comment": "The TESTEST word of a sentence must begin with a capital letter.",
+      "correction": "Hello"
+    },
+    {
+      "type": "grammar",
+      "quote": "is have",
+      "comment": "Incorrect verb construction; only one auxiliary or main verb should be used here.",
+      "correction": "is"
+    },
+    {
+      "type": "grammar",
+      "quote": "is have today beautiful?",
+      "comment": "Word order is incorrect for an English question.",
+      "correction": "is today beautiful?"
+    }
+  ]
+}

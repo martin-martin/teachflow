@@ -14,14 +14,21 @@ from typing import Dict, List, Tuple
 
 from openai import OpenAI
 
-import cfg
+from . import cfg
 
-# Path configuration
+DEBUG = False  # set True to print raw LLM output
+
+# Path configuration aligned to the Hackathon root:
+# Hackathon/
+#   teachflow/
+#     backend/  <-- this file lives here
+#   Input/
+#   Output/
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 INPUT_DIR = PROJECT_ROOT / "Input"
 OUTPUT_DIR = PROJECT_ROOT / "Output"
-RESULTS_DIR = BASE_DIR / "results"
+RESULTS_DIR = PROJECT_ROOT / "Final"
 
 
 def _render_template(template: str, context: Dict[str, str]) -> str:
@@ -29,6 +36,11 @@ def _render_template(template: str, context: Dict[str, str]) -> str:
     rendered = template
     for key, value in context.items():
         rendered = rendered.replace(f"{{{{{key}}}}}", value)
+    # Escape double braces inside OCR text or content that might break substitution
+    rendered = rendered.replace("{{{{", "{").replace("}}}}", "}")
+    # Guarantee no accidental placeholder leftovers
+    for key in ["ocr_text", "full_name", "issues_json", "surname", "lastname"]:
+        rendered = rendered.replace(f"{{{{{key}}}}}", "")
     return rendered
 
 
@@ -57,43 +69,88 @@ class LLMGrader:
 
     def _call_llm(self, system_prompt: str, user_prompt: str, max_completion_tokens: int = 1500) -> str:
         """
-        Call the OpenAI model with a system and user prompt.
-
-        Only max_completion_tokens is used for output control.
+        Stable call to the OpenAI Responses API.
+        This SDK version requires max_output_tokens (NOT max_completion_tokens).
         """
         response = self.client.responses.create(
             model=self.model_name,
-            max_completion_tokens=max_completion_tokens,
+            max_output_tokens=max_completion_tokens,
             input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
         )
 
-        # Extract text content from the first response item
-        if hasattr(response, "output_text"):
+        # Preferred (automatic) text extraction
+        if hasattr(response, "output_text") and response.output_text:
             return response.output_text
+
+        # Fallback: extract block text
         try:
-            return "".join(block.text for block in response.output[0].content if hasattr(block, "text"))
+            chunks = []
+            for msg in response.output:
+                if hasattr(msg, "content"):
+                    for block in msg.content:
+                        if hasattr(block, "text"):
+                            chunks.append(block.text)
+            if chunks:
+                return "".join(chunks)
         except Exception:
-            raise RuntimeError("Unexpected response format from OpenAI.")
+            pass
+
+        # Final fallback: debug string
+        return str(response)
 
     def analyze_text(self, ocr_text: str, student: dict) -> dict:
         """
         Run the analysis chain to detect issues.
         Returns a dict with key 'issues' (list of issue dicts).
         """
+        surname = str(student.get("surname", "")).strip()
+        lastname = str(student.get("lastname", "")).strip()
+        full_name = f"{surname} {lastname}".strip()
         context = {
             "ocr_text": ocr_text,
-            "full_name": f"{student.get('surname', '').strip()} {student.get('lastname', '').strip()}".strip(),
+            "full_name": full_name,
         }
         user_prompt = _render_template(cfg.ANALYSIS_PROMPT_TEMPLATE, context)
         system_prompt = (
-            "You are a strict English teacher. You must be consistent, precise, and deterministic. "
-            "Produce strict JSON with clear issues."
+            "You are a strict English teacher. "
+            "Your output must be deterministic, consistent, and strictly JSON without commentary. "
+            "Never include natural language outside JSON. "
+            "Do not add explanations. "
+            "Do not be creative. "
         )
         raw = self._call_llm(system_prompt, user_prompt)
-        return json.loads(raw)
+        if DEBUG:
+            print("----- RAW MODEL OUTPUT -----")
+            print(raw)
+            print("----- END RAW OUTPUT -------")
+        raw = raw.strip()
+        # Remove markdown fencing if the model wrapped JSON in ```json ... ```
+        if raw.startswith("```"):
+            parts = raw.split("```")
+            raw = parts[1].strip() if len(parts) > 1 else raw
+        # Remove ```json or ``` lines anywhere, not only at start
+        if "```" in raw:
+            parts = raw.split("```")
+            # choose the middle or largest block (heuristic)
+            raw = max(parts, key=len).strip()
+
+        # Remove potential trailing commas
+        raw = raw.replace(",}", "}")
+        raw = raw.replace(",]", "]")
+
+        # Remove leading/trailing semicolons or stray characters
+        raw = raw.lstrip(";").strip()
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            print(f"[ERROR] Invalid JSON returned by model for student {student.get('surname', '')}: {exc}")
+            print("----- RAW MODEL OUTPUT START -----")
+            print(raw)
+            print("----- RAW MODEL OUTPUT END -----")
+            raise
 
     def summarize_feedback(self, ocr_text: str, issues: List[dict], student: dict) -> dict:
         """
@@ -101,20 +158,54 @@ class LLMGrader:
         Returns a dict with keys 'grade' and 'summary_feedback'.
         """
         issues_json = json.dumps({"issues": issues}, ensure_ascii=False)
+        surname = str(student.get("surname", "")).strip()
+        lastname = str(student.get("lastname", "")).strip()
+        full_name = f"{surname} {lastname}".strip()
         context = {
             "ocr_text": ocr_text,
             "issues_json": issues_json,
-            "surname": student.get("surname", "").strip(),
-            "lastname": student.get("lastname", "").strip(),
-            "full_name": f"{student.get('surname', '').strip()} {student.get('lastname', '').strip()}".strip(),
+            "surname": surname,
+            "lastname": lastname,
+            "full_name": full_name,
         }
         user_prompt = _render_template(cfg.SUMMARY_PROMPT_TEMPLATE, context)
         system_prompt = (
-            "You are a strict English teacher. You must be consistent, precise, and deterministic. "
-            "Produce strict JSON with grade and summary_feedback."
+            "You are a strict English teacher. "
+            "Your output must be deterministic, consistent, and strictly JSON without commentary. "
+            "Never include natural language outside JSON. "
+            "Do not add explanations. "
+            "Do not be creative. "
         )
         raw = self._call_llm(system_prompt, user_prompt)
-        return json.loads(raw)
+        if DEBUG:
+            print("----- RAW MODEL OUTPUT -----")
+            print(raw)
+            print("----- END RAW OUTPUT -------")
+        raw = raw.strip()
+        # Remove markdown fencing if the model wrapped JSON in ```json ... ```
+        if raw.startswith("```"):
+            parts = raw.split("```")
+            raw = parts[1].strip() if len(parts) > 1 else raw
+        # Remove ```json or ``` lines anywhere, not only at start
+        if "```" in raw:
+            parts = raw.split("```")
+            # choose the middle or largest block (heuristic)
+            raw = max(parts, key=len).strip()
+
+        # Remove potential trailing commas
+        raw = raw.replace(",}", "}")
+        raw = raw.replace(",]", "]")
+
+        # Remove leading/trailing semicolons or stray characters
+        raw = raw.lstrip(";").strip()
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            print(f"[ERROR] Invalid JSON returned by model for student {student.get('surname', '')}: {exc}")
+            print("----- RAW MODEL OUTPUT START -----")
+            print(raw)
+            print("----- RAW MODEL OUTPUT END -----")
+            raise
 
     @staticmethod
     def build_final_json(student_id: str, student: dict, issues: List[dict], summary: dict) -> dict:
@@ -128,12 +219,64 @@ class LLMGrader:
         }
 
 
+def grade_single_student_essay(student_id: str, ocr_text: str) -> dict:
+    """
+    Convenience function for FastAPI:
+    - Looks up student info (surname, lastname) from rawdata/students.json
+    - Runs analysis + summary via LLMGrader
+    - Returns the final JSON result as a dict.
+
+    This does NOT write any files. It is pure logic.
+    """
+    from . import rawdata  # local import to avoid circular imports at module load
+
+    # Load students and build map {id: student_dict}
+    students = rawdata.load_students()
+    student_map = {str(s["id"]): s for s in students}
+
+    student = student_map.get(str(student_id))
+    if not student:
+        raise ValueError(f"No student found for ID {student_id}")
+
+    grader = LLMGrader()
+
+    # Step 1: analysis (issues)
+    analysis = grader.analyze_text(ocr_text, student)
+    issues = analysis.get("issues", [])
+    if not isinstance(issues, list):
+        issues = []
+
+    # Step 2: summary (grade + summary_feedback)
+    summary = grader.summarize_feedback(ocr_text, issues, student)
+
+    # Build final JSON
+    final_json = grader.build_final_json(str(student_id), student, issues, summary)
+    return final_json
+
+
+def build_students_map_from_rawdata() -> Dict[str, dict]:
+    """
+    Helper to build a {student_id: student_dict} map from rawdata.load_students().
+    Used for CLI / manual testing of the LLM pipeline.
+    """
+    try:
+        from . import rawdata
+    except ImportError:
+        # Fallback if relative import fails (e.g. running as script)
+        import rawdata  # type: ignore
+
+    students = rawdata.load_students()
+    return {str(s["id"]): s for s in students}
+
+
 def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str, dict]) -> None:
     """
     Execute the LLM grading pipeline over a list of (student_id, ocr_text).
     Saves raw outputs to Output/, waits for manual edits in Input/, then saves final JSONs to backend/results/.
     """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure all student IDs in students_map are strings
+    students_map = {str(k): v for k, v in students_map.items()}
     grader = LLMGrader()
 
     for student_id, ocr_text in raw_ocr_list:
@@ -181,11 +324,25 @@ def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str
             print(f"[ERROR] Failed to load edited JSON for ID {student_id}: {exc}")
             continue
 
-        # Minimal validation
         required_keys = {"grade", "summary_feedback", "issues"}
-        if not required_keys.issubset(edited.keys()):
-            print(f"[WARN] Edited JSON missing keys for ID {student_id}; expected {required_keys}")
+        missing = required_keys - set(edited.keys())
+        if missing:
+            print(f"[WARN] Edited JSON missing keys {missing} for ID {student_id}")
+            print("Edited JSON was:", edited)
             continue
+
+        if not isinstance(edited["issues"], list):
+            print(f"[WARN] 'issues' must be a list for ID {student_id}")
+            continue
+
+        # Check issues structure
+        for issue in edited["issues"]:
+            if not isinstance(issue, dict):
+                print(f"[WARN] Issue is not a dict in ID {student_id}")
+                break
+
+        edited["grade"] = str(edited.get("grade", "")).strip()
+        edited["summary_feedback"] = str(edited.get("summary_feedback", "")).strip()
 
         results_path = RESULTS_DIR / f"{student_id}.final.json"
         save_json(results_path, edited)
@@ -193,7 +350,24 @@ def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str
 
 
 if __name__ == "__main__":
-    # Simple self-test data
-    sample_ocr = [("1", "hello world, is have today beautiful?")]
-    sample_students = {"1": {"surname": "Doe", "lastname": "John"}}
-    run_llm_pipeline(sample_ocr, sample_students)
+    """
+    CLI test entrypoint:
+
+    - Uses cfg.DEMO_OCR_PAIRS (via ocr_mock.get_demo_ocr_pairs) as the OCR output.
+    - Uses students.json (via rawdata.load_students) to resolve student metadata.
+    - Runs the full LLM pipeline and writes:
+        - Output/{id}.json
+        - Final/{id}.final.json (after manual edit step).
+    """
+    try:
+        from .ocr_mock import get_demo_ocr_pairs
+    except ImportError:
+        # Fallback if relative import fails (e.g. running as script)
+        from ocr_mock import get_demo_ocr_pairs  # type: ignore
+
+    raw_ocr_list = get_demo_ocr_pairs()
+    students_map = build_students_map_from_rawdata()
+
+    print("Running LLM pipeline with demo OCR pairs from cfg.DEMO_OCR_PAIRS...")
+    print("Pairs:", raw_ocr_list)
+    run_llm_pipeline(raw_ocr_list, students_map)

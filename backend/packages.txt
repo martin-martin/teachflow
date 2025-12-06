@@ -1,0 +1,4 @@
+openai
+python multipart
+uvicorn
+fastapi
