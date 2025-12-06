@@ -1,7 +1,74 @@
 {
   "student_id": "1",
-  "name": "Doe John",
-  "grade": "B",
-  "summary_feedback": "edited",
-  "issues": []
+  "name": "Surname Lastname",
+  "grade": "D",
+  "summary_feedback": "Your paragraph contains multiple basic grammar, spelling, and tense errors that make the writing informal and unclear. Pay attention to correct verb forms, standard spelling, and capitalization of \"I.\" Try to break long run-on sentences into shorter, correctly punctuated ones for better structure.",
+  "issues": [
+    {
+      "type": "grammar",
+      "quote": "yesturday",
+      "comment": "Incorrect spelling of the word.",
+      "correction": "yesterday"
+    },
+    {
+      "type": "grammar",
+      "quote": "i",
+      "comment": "Pronoun 'I' must be capitalized.",
+      "correction": "I"
+    },
+    {
+      "type": "grammar",
+      "quote": "was going to the shop",
+      "comment": "Past progressive is awkward here; simple past is more appropriate.",
+      "correction": "went to the shop"
+    },
+    {
+      "type": "grammar",
+      "quote": "i dont wanted to walk anymore",
+      "comment": "Incorrect negation and verb tense; use past simple with 'did not'.",
+      "correction": "I did not want to walk anymore"
+    },
+    {
+      "type": "grammar",
+      "quote": "my friend sayed",
+      "comment": "Incorrect past tense of the verb 'say'.",
+      "correction": "my friend said"
+    },
+    {
+      "type": "grammar",
+      "quote": "its fine",
+      "comment": "Missing apostrophe in the contraction.",
+      "correction": "it's fine"
+    },
+    {
+      "type": "grammar",
+      "quote": "we go anyways",
+      "comment": "Incorrect verb tense; past simple is needed.",
+      "correction": "we went anyway"
+    },
+    {
+      "type": "grammar",
+      "quote": "slippy",
+      "comment": "Nonstandard adjective form; 'slippery' is correct.",
+      "correction": "slippery"
+    },
+    {
+      "type": "grammar",
+      "quote": "we almost falled",
+      "comment": "Incorrect past tense of the verb 'fall'.",
+      "correction": "we almost fell"
+    },
+    {
+      "type": "grammar",
+      "quote": "tho",
+      "comment": "Informal slang; use the full adverb in formal writing.",
+      "correction": "though"
+    },
+    {
+      "type": "structure",
+      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore but my friend sayed its fine and we go anyways.",
+      "comment": "Run-on sentence with multiple clauses joined only by 'but' and 'so'.",
+      "correction": "Yesterday I went to the shop, but then the rain was very heavy, so I did not want to walk anymore. However, my friend said it's fine, and we went anyway."
+    }
+  ]
 }
