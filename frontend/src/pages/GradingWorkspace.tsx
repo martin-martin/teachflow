@@ -1,14 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, GraduationCap, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import StudentList from '@/components/grading/StudentList';
-import QuestionNavigation from '@/components/grading/QuestionNavigation';
-import PdfViewer from '@/components/grading/PdfViewer';
-import OcrTextEditor from '@/components/grading/OcrTextEditor';
-import FeedbackPanel from '@/components/grading/FeedbackPanel';
-import WorkspaceToolbar from '@/components/grading/WorkspaceToolbar';
-import PdfUploadPanel from '@/components/grading/PdfUploadPanel';
+import EssaySubmissionForm from '@/components/grading/EssaySubmissionForm';
+import BackendFeedbackPanel from '@/components/grading/BackendFeedbackPanel';
 import { useAppStore } from '@/store/appStore';
 
 const GradingWorkspace = () => {
@@ -16,34 +11,10 @@ const GradingWorkspace = () => {
   const {
     teacher,
     currentStudentId,
-    getCurrentAssignment,
-    getAssignmentStudents,
-    getAssignmentQuestions,
-    getCurrentStudent,
-    getCurrentQuestion,
-    getCurrentPdfSubmission,
-    updatePdfOcrText,
+    backendStudents,
   } = useAppStore();
 
-  const assignment = getCurrentAssignment();
-  const students = getAssignmentStudents();
-  const questions = getAssignmentQuestions();
-  const currentStudent = getCurrentStudent();
-  const currentQuestion = getCurrentQuestion();
-  const currentPdf = getCurrentPdfSubmission();
-
-  const currentStudentIndex = students.findIndex((s) => s.id === currentStudentId);
-  const currentQuestionIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
-
-  // Calculate grading progress
-  const totalItems = students.length * questions.length;
-  const gradedItems = assignment?.gradedCount || 0;
-  const progressPercent = totalItems > 0 ? Math.round((gradedItems / totalItems) * 100) : 0;
-
-  if (!assignment) {
-    navigate('/dashboard');
-    return null;
-  }
+  const currentStudentIndex = backendStudents.findIndex((s) => s.id === currentStudentId);
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -64,29 +35,15 @@ const GradingWorkspace = () => {
             <div className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10">
               <GraduationCap className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-semibold text-sm">FeedbackAI</span>
+            <span className="font-semibold text-sm">TeachFlow Grading</span>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="text-sm">
-            <span className="font-medium">{assignment.name}</span>
-          </div>
-
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>
-              Student {currentStudentIndex + 1} / {students.length}
+              Student {currentStudentIndex >= 0 ? currentStudentIndex + 1 : '-'} / {backendStudents.length}
             </span>
-            <span>•</span>
-            <span>
-              Question {currentQuestionIndex + 1} / {questions.length}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Graded:</span>
-            <Progress value={progressPercent} className="w-24 h-2" />
-            <span className="font-medium">{progressPercent}%</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -103,40 +60,16 @@ const GradingWorkspace = () => {
         {/* Left Sidebar - Student List */}
         <div className="w-64 shrink-0 flex flex-col border-r">
           <StudentList />
-          <div className="p-3 border-t">
-            <PdfUploadPanel />
-          </div>
         </div>
 
-        {/* Center + Right Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Question Navigation */}
-          <QuestionNavigation />
+        {/* Center - Essay Submission Form */}
+        <div className="flex-1 flex flex-col overflow-hidden border-r">
+          <EssaySubmissionForm className="flex-1 overflow-auto" />
+        </div>
 
-          {/* Split View: PDF + OCR Text + Feedback */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* PDF Viewer */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <PdfViewer pdfSubmission={currentPdf || null} className="flex-1" />
-            </div>
-
-            {/* OCR Text Editor */}
-            <div className="w-[320px] shrink-0 flex flex-col overflow-hidden">
-              <OcrTextEditor
-                pdfSubmission={currentPdf || null}
-                onTextChange={(text) => currentPdf && updatePdfOcrText(currentPdf.id, text)}
-                className="flex-1"
-              />
-            </div>
-
-            {/* Feedback Panel */}
-            <div className="w-[420px] shrink-0 flex flex-col overflow-hidden border-l">
-              <FeedbackPanel />
-            </div>
-          </div>
-
-          {/* Bottom Toolbar */}
-          <WorkspaceToolbar />
+        {/* Right - Feedback Panel */}
+        <div className="w-[450px] shrink-0 flex flex-col overflow-hidden">
+          <BackendFeedbackPanel className="flex-1 overflow-hidden" />
         </div>
       </div>
     </div>
@@ -144,3 +77,4 @@ const GradingWorkspace = () => {
 };
 
 export default GradingWorkspace;
+

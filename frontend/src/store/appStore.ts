@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { Teacher, Assignment, Student, Question, Answer, Feedback, GradingStatus, PdfSubmission } from '@/types';
-import { 
-  mockStudents, 
-  mockAssignments, 
-  mockQuestions, 
-  mockAnswers, 
+import {
+  mockStudents,
+  mockAssignments,
+  mockQuestions,
+  mockAnswers,
   mockFeedback,
-  mockSubmissions 
+  mockSubmissions
 } from '@/data/mockData';
 import {
   extractTextFromPdf,
@@ -15,6 +15,14 @@ import {
   getPdfPageCount,
   createPdfUrl,
 } from '@/lib/ocr';
+import {
+  fetchStudents as apiFetchStudents,
+  submitEssay as apiSubmitEssay,
+  updateFeedback as apiUpdateFeedback,
+  getResult as apiGetResult,
+  BackendStudent,
+  GradingResult,
+} from '@/lib/api';
 
 interface AppState {
   // Auth
@@ -30,6 +38,16 @@ interface AppState {
   feedback: Feedback[];
   pdfSubmissions: PdfSubmission[];
 
+  // Backend API state
+  backendStudents: BackendStudent[];
+  backendStudentsLoading: boolean;
+  backendStudentsError: string | null;
+  currentGradingResult: GradingResult | null;
+  submissionLoading: boolean;
+  submissionError: string | null;
+  feedbackSaving: boolean;
+  feedbackSaveError: string | null;
+
   // Current selections
   currentAssignmentId: string | null;
   currentStudentId: string | null;
@@ -39,7 +57,7 @@ interface AppState {
   setCurrentAssignment: (id: string | null) => void;
   setCurrentStudent: (id: string | null) => void;
   setCurrentQuestion: (id: string | null) => void;
-  
+
   // CRUD
   addAssignment: (assignment: Omit<Assignment, 'id' | 'teacherId' | 'studentCount' | 'gradedCount' | 'lastUpdated'>) => void;
   updateFeedback: (feedbackId: string, updates: Partial<Feedback>) => void;
@@ -64,6 +82,14 @@ interface AppState {
   getQuestionFeedback: (questionId: string, studentId: string) => Feedback | undefined;
   getAssignmentQuestions: () => Question[];
   getAssignmentStudents: () => Student[];
+  getBackendStudents: () => BackendStudent[];
+
+  // Backend API actions
+  fetchStudentsFromBackend: () => Promise<void>;
+  submitEssayToBackend: (studentId: string, essayText: string) => Promise<GradingResult | null>;
+  updateFeedbackOnBackend: (studentId: string, grade: string, summaryFeedback: string) => Promise<boolean>;
+  fetchResultFromBackend: (studentId: string) => Promise<GradingResult | null>;
+  clearCurrentGradingResult: () => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -76,7 +102,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   submissions: mockSubmissions,
   feedback: mockFeedback,
   pdfSubmissions: [],
-  
+
+  // Backend API state
+  backendStudents: [],
+  backendStudentsLoading: false,
+  backendStudentsError: null,
+  currentGradingResult: null,
+  submissionLoading: false,
+  submissionError: null,
+  feedbackSaving: false,
+  feedbackSaveError: null,
+
   currentAssignmentId: null,
   currentStudentId: null,
   currentQuestionId: null,
@@ -87,9 +123,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCurrentStudent: (id) => {
     const state = get();
     const questions = state.questions.filter((q) => q.assignmentId === state.currentAssignmentId);
-    set({ 
-      currentStudentId: id, 
-      currentQuestionId: questions.length > 0 ? questions[0].id : null 
+    set({
+      currentStudentId: id,
+      currentQuestionId: questions.length > 0 ? questions[0].id : null
     });
   },
   setCurrentQuestion: (id) => set({ currentQuestionId: id }),
@@ -166,20 +202,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       try {
         // Step 1: Extract name from top-left corner
         const detectedName = await extractNameFromTopLeft(file);
-        
+
         // Step 2: Match to student
         const matchResult = matchStudentByName({ detectedName, students });
-        
+
         // Update with name detection results
         set((state) => ({
           pdfSubmissions: state.pdfSubmissions.map((p) =>
             p.id === pdf.id
               ? {
-                  ...p,
-                  detectedStudentName: detectedName,
-                  studentId: matchResult.matchedStudentId,
-                  matchStatus: matchResult.status,
-                }
+                ...p,
+                detectedStudentName: detectedName,
+                studentId: matchResult.matchedStudentId,
+                matchStatus: matchResult.status,
+              }
               : p
           ),
         }));
@@ -195,11 +231,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           pdfSubmissions: state.pdfSubmissions.map((p) =>
             p.id === pdf.id
               ? {
-                  ...p,
-                  ocrText,
-                  totalPages: pageCount,
-                  ocrStatus: 'done' as const,
-                }
+                ...p,
+                ocrText,
+                totalPages: pageCount,
+                ocrStatus: 'done' as const,
+              }
               : p
           ),
         }));
@@ -219,10 +255,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       pdfSubmissions: state.pdfSubmissions.map((pdf) =>
         pdf.id === pdfId
           ? {
-              ...pdf,
-              studentId,
-              matchStatus: studentId ? 'matched' : 'unmatched',
-            }
+            ...pdf,
+            studentId,
+            matchStatus: studentId ? 'matched' : 'unmatched',
+          }
           : pdf
       ),
     }));
@@ -283,7 +319,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getCurrentAnswer: () => {
     const state = get();
     if (!state.currentStudentId || !state.currentQuestionId) return undefined;
-    
+
     const submission = state.submissions.find(
       (s) => s.studentId === state.currentStudentId && s.assignmentId === state.currentAssignmentId
     );
@@ -297,7 +333,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getCurrentFeedback: () => {
     const state = get();
     if (!state.currentStudentId || !state.currentQuestionId) return undefined;
-    
+
     const submission = state.submissions.find(
       (s) => s.studentId === state.currentStudentId && s.assignmentId === state.currentAssignmentId
     );
@@ -311,7 +347,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getCurrentPdfSubmission: () => {
     const state = get();
     if (!state.currentStudentId || !state.currentAssignmentId) return undefined;
-    
+
     return state.pdfSubmissions.find(
       (pdf) => pdf.studentId === state.currentStudentId && pdf.assignmentId === state.currentAssignmentId
     );
@@ -320,7 +356,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getStudentPdfSubmission: (studentId) => {
     const state = get();
     if (!state.currentAssignmentId) return undefined;
-    
+
     return state.pdfSubmissions.find(
       (pdf) => pdf.studentId === studentId && pdf.assignmentId === state.currentAssignmentId
     );
@@ -368,5 +404,68 @@ export const useAppStore = create<AppState>((set, get) => ({
     const assignment = state.getCurrentAssignment();
     if (!assignment) return [];
     return state.students.filter((s) => s.className === assignment.className);
+  },
+
+  getBackendStudents: () => {
+    return get().backendStudents;
+  },
+
+  // Backend API actions
+  fetchStudentsFromBackend: async () => {
+    set({ backendStudentsLoading: true, backendStudentsError: null });
+    try {
+      const students = await apiFetchStudents();
+      set({ backendStudents: students, backendStudentsLoading: false });
+    } catch (error) {
+      set({
+        backendStudentsLoading: false,
+        backendStudentsError: error instanceof Error ? error.message : 'Failed to fetch students',
+      });
+    }
+  },
+
+  submitEssayToBackend: async (studentId: string, essayText: string) => {
+    set({ submissionLoading: true, submissionError: null, currentGradingResult: null });
+    try {
+      const result = await apiSubmitEssay(studentId, essayText);
+      set({ currentGradingResult: result, submissionLoading: false });
+      return result;
+    } catch (error) {
+      set({
+        submissionLoading: false,
+        submissionError: error instanceof Error ? error.message : 'Failed to submit essay',
+      });
+      return null;
+    }
+  },
+
+  updateFeedbackOnBackend: async (studentId: string, grade: string, summaryFeedback: string) => {
+    set({ feedbackSaving: true, feedbackSaveError: null });
+    try {
+      await apiUpdateFeedback(studentId, { grade, summary_feedback: summaryFeedback });
+      set({ feedbackSaving: false });
+      return true;
+    } catch (error) {
+      set({
+        feedbackSaving: false,
+        feedbackSaveError: error instanceof Error ? error.message : 'Failed to save feedback',
+      });
+      return false;
+    }
+  },
+
+  fetchResultFromBackend: async (studentId: string) => {
+    try {
+      const result = await apiGetResult(studentId);
+      set({ currentGradingResult: result });
+      return result;
+    } catch {
+      // Result may not exist yet, that's okay
+      return null;
+    }
+  },
+
+  clearCurrentGradingResult: () => {
+    set({ currentGradingResult: null, submissionError: null });
   },
 }));
