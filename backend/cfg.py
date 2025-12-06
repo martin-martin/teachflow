@@ -10,7 +10,7 @@ strict JSON output from the model.
 # STUDENT REGISTRY (id -> "Surname Lastname")
 # -------------------------------------------------------------
 STUDENTS = {
-    "1": "Surname Lastname",
+    "1": "John Pork",
     "2": "Smith Jane",
     "3": "Doe John",
     "4": "Brown Alice",
