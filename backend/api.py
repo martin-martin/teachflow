@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 
 from . import cfg
 from .llm_pipeline import grade_single_student_essay
-from .text_store import add_submission
 
 # Path configuration aligned with existing code
 BASE_DIR = Path(__file__).resolve().parent          # teachflow/backend
@@ -29,36 +28,63 @@ def _final_json_path(student_id: str) -> Path:
 @app.post("/submissions/{student_id}")
 async def create_submission(
     student_id: str,
-    payload: Dict = Body(..., description="Payload must contain an 'essay_text' field."),
+    payload: Dict = Body(..., description="Payload must contain an 'essay_text' field; 'assignment_task' is optional."),
 ):
     """
     CREATE:
-    - Frontend sends a JSON payload with the student's essay text.
-    - Payload shape: { "essay_text": "<full essay text>" }
-    - Text is stored in an in-memory list of (id, text) tuples.
-    - LLM grading is performed.
+    - Frontend sends a JSON payload with the student's essay text and optional assignment task.
+    - Payload shape:
+        {
+            "essay_text": "<full essay text>",
+            "assignment_task": "<original homework prompt (optional)>"
+        }
+    - Text is stored (id, text) for this session if you use an in-memory store.
+    - LLM grading is performed on a combined "task + answer" string.
     - Final JSON is saved into teachflow/Final/{student_id}.json.
-    - Final JSON is returned in the response.
+    - Final JSON (including assignment_task) is returned in the response.
     """
     essay_text = payload.get("essay_text")
+    assignment_task = payload.get("assignment_task") or ""
+
     if not isinstance(essay_text, str) or not essay_text.strip():
         raise HTTPException(status_code=400, detail="Missing or empty 'essay_text' field.")
 
-    # Store the submission for later inspection (in-memory).
-    add_submission(student_id, essay_text)
+    # If you have an in-memory store for submissions, keep this:
+    try:
+        from .text_store import add_submission  # use relative import if inside backend package
+        add_submission(student_id, essay_text)
+    except Exception:
+        # If text_store is not present or not needed, you can ignore this block.
+        pass
+
+    # Combine assignment task + student answer into one string for the LLM
+    if assignment_task.strip():
+        combined_text = (
+            "Assignment task:\n"
+            f"{assignment_task.strip()}\n\n"
+            "Student answer:\n"
+            f"{essay_text.strip()}"
+        )
+    else:
+        combined_text = essay_text.strip()
 
     try:
-        result_json = grade_single_student_essay(student_id, essay_text)
+        result_json = grade_single_student_essay(student_id, combined_text)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM grading failed: {e}")
 
+    # Store the (raw) assignment task in the result JSON for traceability
+    result_json["assignment_task"] = assignment_task.strip()
+
     # Save final JSON to Final/{student_id}.json
     final_path = _final_json_path(student_id)
     final_path.parent.mkdir(parents=True, exist_ok=True)
+
+    import json
     final_path.write_text(
-        __import__("json").dumps(result_json, ensure_ascii=False, indent=2),
+        json.dumps(result_json, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
@@ -66,42 +92,38 @@ async def create_submission(
 
 
 @app.patch("/feedback/{student_id}")
-async def update_feedback(student_id: str, edited: Dict):
+async def update_feedback(
+    student_id: str,
+    payload: Dict = Body(..., description="Optional keys: grade, summary_feedback, issues"),
+):
     """
-    UPDATE:
-    - Teacher sends edited feedback JSON for a given student_id.
-    - JSON must at least contain 'grade' and 'summary_feedback'.
-    - We overwrite Final/{student_id}.json with this edited JSON.
+    Update stored feedback for a student.
+    Accepts optional keys:
+      - grade (str)
+      - summary_feedback (str)
+      - issues (list[dict])  # full replacement
     """
-    required_keys = {"grade", "summary_feedback"}
-    missing = required_keys - set(edited.keys())
-    if missing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Missing required keys in edited feedback: {missing}",
-        )
-
     final_path = _final_json_path(student_id)
     if not final_path.exists():
-        raise HTTPException(status_code=404, detail="No existing result for this student_id.")
+        raise HTTPException(status_code=404, detail="No feedback stored for this student.")
 
-    # Load old JSON (so we can keep any extra fields if desired)
     import json
-    try:
-        existing = json.loads(final_path.read_text(encoding="utf-8"))
-    except Exception:
-        existing = {}
 
-    # Merge existing with edited; edited values win
-    merged = dict(existing)
-    merged.update(edited)
+    data = json.loads(final_path.read_text(encoding="utf-8"))
 
-    final_path.write_text(
-        json.dumps(merged, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    grade = payload.get("grade")
+    summary = payload.get("summary_feedback")
+    issues = payload.get("issues")
 
-    return {"status": "updated", "student_id": student_id}
+    if grade is not None:
+        data["grade"] = grade
+    if summary is not None:
+        data["summary_feedback"] = summary
+    if issues is not None:
+        data["issues"] = issues
+
+    final_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return JSONResponse(content=data)
 
 
 @app.get("/results/{student_id}")
