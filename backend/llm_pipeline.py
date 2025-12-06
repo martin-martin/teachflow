@@ -10,13 +10,34 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import logging
 from typing import Dict, List, Tuple
 
-from openai import OpenAI
+from google import genai
+from google.genai import types
+from pydantic import BaseModel
 
 from . import cfg
 
 DEBUG = False  # set True to print raw LLM output
+logger = logging.getLogger(__name__)
+
+
+# Pydantic models for structured JSON responses
+class Issue(BaseModel):
+    type: str
+    quote: str
+    comment: str
+    correction: str
+
+
+class AnalysisResponse(BaseModel):
+    issues: List[Issue]
+
+
+class SummaryResponse(BaseModel):
+    grade: str
+    summary_feedback: str
 
 # Path configuration aligned to the Hackathon root:
 # Hackathon/
@@ -62,44 +83,56 @@ class LLMGrader:
 
     def __init__(self, model_name: str | None = None) -> None:
         self.model_name = model_name or cfg.LLM_MODEL_NAME
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError("OPENAI_API_KEY environment variable is not set.")
-        self.client = OpenAI(api_key=api_key)
-
-    def _call_llm(self, system_prompt: str, user_prompt: str, max_completion_tokens: int = 1500) -> str:
-        """
-        Stable call to the OpenAI Responses API.
-        This SDK version requires max_output_tokens (NOT max_completion_tokens).
-        """
-        response = self.client.responses.create(
-            model=self.model_name,
-            max_output_tokens=max_completion_tokens,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+        api_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("GOOGLE_GENAI_API_KEY")
         )
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY (or GOOGLE_API_KEY) environment variable is not set.")
+        self.client = genai.Client(api_key=api_key)
+        # Keep temperature deterministic for repeatable JSON output
+        self.base_generation_config = {"temperature": 0}
 
-        # Preferred (automatic) text extraction
-        if hasattr(response, "output_text") and response.output_text:
-            return response.output_text
-
-        # Fallback: extract block text
+    def _call_llm(self, system_prompt: str, user_prompt: str, response_schema: type[BaseModel], max_completion_tokens: int = 8000):
+        """
+        Stable call to the Google Gemini API using the latest SDK patterns with structured output.
+        Returns the parsed response object matching the response_schema.
+        """
         try:
-            chunks = []
-            for msg in response.output:
-                if hasattr(msg, "content"):
-                    for block in msg.content:
-                        if hasattr(block, "text"):
-                            chunks.append(block.text)
-            if chunks:
-                return "".join(chunks)
-        except Exception:
-            pass
-
-        # Final fallback: debug string
-        return str(response)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=self.base_generation_config.get("temperature", 0),
+                    max_output_tokens=max_completion_tokens,
+                    response_mime_type='application/json',
+                    response_schema=response_schema,
+                    # Disable thinking to save tokens for actual JSON output
+                    # Note: thinking_config only works with Gemini 2.5 series models
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
+                ),
+            )
+            
+            # Check for errors
+            if getattr(response, "error", None):
+                logger.error("Gemini API returned error: %s", response.error)
+                raise RuntimeError(f"Gemini API error: {response.error}")
+            
+            # Use the parsed response (automatically validated against schema)
+            if hasattr(response, "parsed") and response.parsed:
+                return response.parsed
+            
+            # Fallback to manual parsing if parsed not available
+            if hasattr(response, "text") and response.text:
+                return response_schema.model_validate_json(response.text)
+            
+            raise RuntimeError("No valid response from Gemini API")
+            
+        except Exception as exc:
+            logger.exception("Error calling Gemini API: %s", exc)
+            raise RuntimeError(f"Failed to call Gemini API: {exc}") from exc
 
     def analyze_text(self, ocr_text: str, student: dict) -> dict:
         """
@@ -115,36 +148,17 @@ class LLMGrader:
         }
         user_prompt = _render_template(cfg.ANALYSIS_PROMPT_TEMPLATE, context)
         system_prompt = cfg.LLM_SYSTEM_PROMPT
-        raw = self._call_llm(system_prompt, user_prompt)
+        
+        # Call LLM with structured output schema
+        parsed_response = self._call_llm(system_prompt, user_prompt, response_schema=AnalysisResponse)
+        
         if DEBUG:
-            print("----- RAW MODEL OUTPUT -----")
-            print(raw)
-            print("----- END RAW OUTPUT -------")
-        raw = raw.strip()
-        # Remove markdown fencing if the model wrapped JSON in ```json ... ```
-        if raw.startswith("```"):
-            parts = raw.split("```")
-            raw = parts[1].strip() if len(parts) > 1 else raw
-        # Remove ```json or ``` lines anywhere, not only at start
-        if "```" in raw:
-            parts = raw.split("```")
-            # choose the middle or largest block (heuristic)
-            raw = max(parts, key=len).strip()
-
-        # Remove potential trailing commas
-        raw = raw.replace(",}", "}")
-        raw = raw.replace(",]", "]")
-
-        # Remove leading/trailing semicolons or stray characters
-        raw = raw.lstrip(";").strip()
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError as exc:
-            print(f"[ERROR] Invalid JSON returned by model for student {student.get('surname', '')}: {exc}")
-            print("----- RAW MODEL OUTPUT START -----")
-            print(raw)
-            print("----- RAW MODEL OUTPUT END -----")
-            raise
+            print("----- PARSED MODEL OUTPUT -----")
+            print(parsed_response)
+            print("----- END OUTPUT -------")
+        
+        # Convert Pydantic model to dict
+        return parsed_response.model_dump()
 
     def summarize_feedback(self, ocr_text: str, issues: List[dict], student: dict) -> dict:
         """
@@ -164,36 +178,17 @@ class LLMGrader:
         }
         user_prompt = _render_template(cfg.SUMMARY_PROMPT_TEMPLATE, context)
         system_prompt = cfg.LLM_SYSTEM_PROMPT
-        raw = self._call_llm(system_prompt, user_prompt)
+        
+        # Call LLM with structured output schema
+        parsed_response = self._call_llm(system_prompt, user_prompt, response_schema=SummaryResponse)
+        
         if DEBUG:
-            print("----- RAW MODEL OUTPUT -----")
-            print(raw)
-            print("----- END RAW OUTPUT -------")
-        raw = raw.strip()
-        # Remove markdown fencing if the model wrapped JSON in ```json ... ```
-        if raw.startswith("```"):
-            parts = raw.split("```")
-            raw = parts[1].strip() if len(parts) > 1 else raw
-        # Remove ```json or ``` lines anywhere, not only at start
-        if "```" in raw:
-            parts = raw.split("```")
-            # choose the middle or largest block (heuristic)
-            raw = max(parts, key=len).strip()
-
-        # Remove potential trailing commas
-        raw = raw.replace(",}", "}")
-        raw = raw.replace(",]", "]")
-
-        # Remove leading/trailing semicolons or stray characters
-        raw = raw.lstrip(";").strip()
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError as exc:
-            print(f"[ERROR] Invalid JSON returned by model for student {student.get('surname', '')}: {exc}")
-            print("----- RAW MODEL OUTPUT START -----")
-            print(raw)
-            print("----- RAW MODEL OUTPUT END -----")
-            raise
+            print("----- PARSED MODEL OUTPUT -----")
+            print(parsed_response)
+            print("----- END OUTPUT -------")
+        
+        # Convert Pydantic model to dict
+        return parsed_response.model_dump()
 
     @staticmethod
     def build_final_json(student_id: str, student: dict, issues: List[dict], summary: dict) -> dict:

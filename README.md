@@ -4,7 +4,7 @@ TeachFlow is an AI-powered grading assistant that helps educators provide struct
 
 This helps teachers save time and focus on teaching!
 
-This repo ships a FastAPI backend plus a Streamlit UI.
+The repo ships the project MVP as a FastAPI backend with a Streamlit UI.
 
 ## Features
 
@@ -23,6 +23,7 @@ teachflow/
 ├── backend/              # FastAPI backend
 │   ├── api.py            # Main FastAPI application
 │   ├── llm_pipeline.py   # LLM grading logic
+│   ├── ocr_mock.py       # Demo OCR/text supplier for the pipeline
 │   ├── cfg.py            # Configuration
 │   ├── rawdata.py        # Data utilities
 │   ├── text_store.py     # Text storage utilities
@@ -30,7 +31,10 @@ teachflow/
 │       ├── students.json # Optional roster for the rawdata helper
 │       └── pdfs/         # Uploaded student submissions (for OCR experiments)
 ├── db_mockup/            # JSON "database" for saved results (auto-created)
+├── examples/             # Sample rubrics and student essays
 ├── pyproject.toml        # Python dependencies
+├── requirements.txt      # Pinned alternative dependency list
+├── uv.lock               # uv lockfile
 └── README.md             # This file
 ```
 
@@ -39,7 +43,7 @@ teachflow/
 - **Python 3.13+**
   - Developed with the [uv](https://github.com/astral-sh/uv) package manager. Install uv with `curl -LsSf https://astral.sh/uv/install.sh | sh` to run the commands with `uv run`
   - Alternatively, build your .venv with `python -m venv .venv`, activate with `source .venv/bin/activate` (UNIX) or `.venv\Scripts\activate` (Windows), install dependencies from `requirements.txt` with `python -m pip install -r requirements.txt`, and then run the commands skipping `uv run`
-- **OpenAI API key** available as `OPENAI_API_KEY` (the backend uses the OpenAI Responses API).
+- **Google Gemini API key** available as `GEMINI_API_KEY` (the backend uses the Gemini API; `GOOGLE_API_KEY` and `GOOGLE_GENAI_API_KEY` are also recognized). The backend loads a local `.env` automatically.
 
 ## Quickstart (local)
 
@@ -47,7 +51,7 @@ Run these steps from the repo root (`teachflow/`):
 
 ```bash
 uv sync  # if using uv
-echo 'OPENAI_API_KEY=your-api-key-here' > .env   # or export in your shell
+echo 'GEMINI_API_KEY=your-api-key-here' > .env   # or export in your shell (GOOGLE_API_KEY also supported)
 uv run python -m uvicorn backend.api:app --reload
 ```
 
@@ -76,15 +80,16 @@ You can use the rubrics and example exam submissions in `examples/` for testing 
 
 ### Student Management
 - `GET /students` - List all students from the roster, should eventually come from a student management system that teachers actually use
+- `GET /students/{student_id}` - Retrieve the name for a single student
 
 ### Submissions
 - `POST /submissions/{student_id}` - Submit essay for grading
   - Accepts JSON with `essay_text` and optional `assignment_task`
-  - Returns grading results with feedback and issues
+  - Returns grading results with feedback and issues (the assignment task is echoed back in the response)
 
 ### Feedback Management
 - `PATCH /feedback/{student_id}` - Update/edit feedback for a student
-  - Requires `grade`, `summary_feedback`, and `issues` fields
+  - Accepts any combination of `grade`, `summary_feedback`, and `issues` fields to update stored feedback
   - Saves updated feedback to storage (should eventually be a proper database)
 
 ### Results
@@ -98,7 +103,8 @@ You can use the rubrics and example exam submissions in `examples/` for testing 
 The backend (and Streamlit UI) currently reads students from `backend/cfg.py::STUDENTS`:
 
 - Update that dict to change displayed students.
-- If you want to experiment with PDF/OCR matching, checkout the `ocr-llm` branch first. The helper in `backend/rawdata.py` uses `backend/data/students.json` and `backend/data/pdfs/` to map PDFs to student IDs.
+- `backend/rawdata.py` can map PDFs named `Surname Lastname.pdf` in `backend/data/pdfs/` to student IDs using `backend/data/students.json` if you want to experiment with OCR-based inputs.
+- `backend/ocr_mock.py` is a small helper to supply demo OCR text from `cfg.DEMO_ESSAY_PAIRS`.
 
 ### AI Grading Configuration
 
@@ -107,6 +113,7 @@ Customize grading behavior in `backend/cfg.py`:
 - Modify issue categories
 - Configure feedback structure
 - Set rubric criteria
+- Update `LLM_MODEL_NAME` to another Gemini model if you want a different quality/speed trade-off (default: `gemini-2.5-flash`).
 
 A lot of this input should eventually come via RAG from the actual teaching context of a teacher's class and curriculum.
 
@@ -118,9 +125,9 @@ A lot of this input should eventually come via RAG from the actual teaching cont
    - An overall grade
    - Summary feedback
    - Specific issues categorized by type (e.g. Grammar, Vocabulary, Content, Structure for writing)
-- Quoted text from the essay
-- Comments explaining each issue
-- Suggested corrections
+   - Quoted text from the essay
+   - Comments explaining each issue
+   - Suggested corrections
 4. **Review & Edit**: Teachers can review and modify the AI-generated feedback
 5. **Storage**: Final feedback is saved in `db_mockup/` as `{student_id}.json` and can be retrieved later, meant to write to printable PDF to hand it back to students
 
@@ -136,7 +143,7 @@ The folder is created automatically when the backend or pipeline runs.
 ### Backend won't start
 - Ensure Python 3.13+ is installed: `python --version`
 - Check that all dependencies are installed: `uv sync` or `python -m pip install -r requirements.txt`
-- Verify your OpenAI API key environment variable is set correctly
+- Verify your Gemini API key environment variable is set correctly
 
 ### Streamlit shows "Failed to fetch students"
 - Make sure the backend is running on `http://localhost:8000`

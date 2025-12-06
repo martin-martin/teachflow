@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Dict
 
@@ -20,6 +21,7 @@ DB_MOCKUP_DIR = PROJECT_ROOT / "db_mockup"
 DB_MOCKUP_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="TeachFlow MVP API", version="0.1.0")
+logger = logging.getLogger(__name__)
 
 
 def _final_json_path(student_id: str) -> Path:
@@ -75,6 +77,7 @@ async def create_submission(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        logger.exception("LLM grading failed for student %s", student_id)
         raise HTTPException(status_code=500, detail=f"LLM grading failed: {e}")
 
     # Store the (raw) assignment task in the result JSON for traceability

@@ -21,7 +21,7 @@ STUDENTS = {
 # -------------------------------------------------------------
 # LLM CONFIG
 # -------------------------------------------------------------
-LLM_MODEL_NAME = "gpt-5.1"
+LLM_MODEL_NAME = "gemini-2.5-flash"
 LLM_SYSTEM_PROMPT = (
     "You are a strict English teacher. "
     "Your output must be deterministic, consistent, and strictly JSON without commentary. "
