@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Dict
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import JSONResponse
 
-from llm_pipeline import grade_single_student_essay
-from ocr_mock import run_ocr_mock_for_id
+from . import cfg
+from .llm_pipeline import grade_single_student_essay
+from .text_store import add_submission
 
 # Path configuration aligned with existing code
 BASE_DIR = Path(__file__).resolve().parent          # teachflow/backend
@@ -26,31 +27,28 @@ def _final_json_path(student_id: str) -> Path:
 
 
 @app.post("/submissions/{student_id}")
-async def create_submission(student_id: str, file: UploadFile = File(...)):
+async def create_submission(
+    student_id: str,
+    payload: Dict = Body(..., description="Payload must contain an 'essay_text' field."),
+):
     """
     CREATE:
-    - Teacher uploads a PDF for a given student_id.
-    - PDF is saved into teachflow/Input/.
-    - Mock OCR is run (using cfg.DEMO_OCR_TEXT).
+    - Frontend sends a JSON payload with the student's essay text.
+    - Payload shape: { "essay_text": "<full essay text>" }
+    - Text is stored in an in-memory list of (id, text) tuples.
     - LLM grading is performed.
     - Final JSON is saved into teachflow/Final/{student_id}.json.
     - Final JSON is returned in the response.
     """
-    # Basic file check
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    essay_text = payload.get("essay_text")
+    if not isinstance(essay_text, str) or not essay_text.strip():
+        raise HTTPException(status_code=400, detail="Missing or empty 'essay_text' field.")
 
-    # Save uploaded file into Input/
-    pdf_path = INPUT_DIR / f"{student_id}.pdf"
-    with pdf_path.open("wb") as f:
-        content = await file.read()
-        f.write(content)
-
-    # Run MOCK OCR (real OCR will replace this later)
-    ocr_text = run_ocr_mock_for_id(student_id, pdf_path)
+    # Store the submission for later inspection (in-memory).
+    add_submission(student_id, essay_text)
 
     try:
-        result_json = grade_single_student_essay(student_id, ocr_text)
+        result_json = grade_single_student_essay(student_id, essay_text)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -120,3 +118,26 @@ async def get_result(student_id: str):
     import json
     data = json.loads(final_path.read_text(encoding="utf-8"))
     return JSONResponse(content=data)
+
+
+@app.get("/students")
+async def list_students():
+    """
+    GET:
+    - Returns all configured students from cfg.STUDENTS.
+    - Response shape: [{ "id": "1", "name": "Surname Lastname" }, ...]
+    """
+    students = [
+        {"id": str(sid), "name": str(name)}
+        for sid, name in cfg.STUDENTS.items()
+    ]
+    students.sort(key=lambda s: int(s["id"]))
+    return JSONResponse(content=students)
+
+
+@app.get("/students/{student_id}")
+async def get_student(student_id: str):
+    name = cfg.STUDENTS.get(str(student_id))
+    if not name:
+        raise HTTPException(status_code=404, detail="Student not found.")
+    return {"id": str(student_id), "name": str(name)}

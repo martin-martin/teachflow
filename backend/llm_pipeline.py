@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 from openai import OpenAI
 
-import cfg
+from . import cfg
 
 DEBUG = False  # set True to print raw LLM output
 
@@ -60,8 +60,8 @@ def load_json(path: Path) -> dict:
 class LLMGrader:
     """Handles the two-step LLM grading process."""
 
-    def __init__(self, model_name: str = "gpt-5.1") -> None:
-        self.model_name = model_name
+    def __init__(self, model_name: str | None = None) -> None:
+        self.model_name = model_name or cfg.LLM_MODEL_NAME
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY environment variable is not set.")
@@ -114,13 +114,7 @@ class LLMGrader:
             "full_name": full_name,
         }
         user_prompt = _render_template(cfg.ANALYSIS_PROMPT_TEMPLATE, context)
-        system_prompt = (
-            "You are a strict English teacher. "
-            "Your output must be deterministic, consistent, and strictly JSON without commentary. "
-            "Never include natural language outside JSON. "
-            "Do not add explanations. "
-            "Do not be creative. "
-        )
+        system_prompt = cfg.LLM_SYSTEM_PROMPT
         raw = self._call_llm(system_prompt, user_prompt)
         if DEBUG:
             print("----- RAW MODEL OUTPUT -----")
@@ -169,13 +163,7 @@ class LLMGrader:
             "full_name": full_name,
         }
         user_prompt = _render_template(cfg.SUMMARY_PROMPT_TEMPLATE, context)
-        system_prompt = (
-            "You are a strict English teacher. "
-            "Your output must be deterministic, consistent, and strictly JSON without commentary. "
-            "Never include natural language outside JSON. "
-            "Do not add explanations. "
-            "Do not be creative. "
-        )
+        system_prompt = cfg.LLM_SYSTEM_PROMPT
         raw = self._call_llm(system_prompt, user_prompt)
         if DEBUG:
             print("----- RAW MODEL OUTPUT -----")
@@ -219,50 +207,63 @@ class LLMGrader:
         }
 
 
-def grade_single_student_essay(student_id: str, ocr_text: str) -> dict:
+def grade_single_student_essay(student_id: str, essay_text: str) -> dict:
     """
     Convenience function for FastAPI:
-    - Looks up student info (surname, lastname) from rawdata/students.json
+    - Looks up student info from cfg.STUDENTS
     - Runs analysis + summary via LLMGrader
     - Returns the final JSON result as a dict.
 
     This does NOT write any files. It is pure logic.
     """
-    import rawdata  # local import to avoid circular imports at module load
-
-    # Load students and build map {id: student_dict}
-    students = rawdata.load_students()
-    student_map = {str(s["id"]): s for s in students}
-
-    student = student_map.get(str(student_id))
+    students = build_students_map_from_cfg()
+    student = students.get(str(student_id))
     if not student:
         raise ValueError(f"No student found for ID {student_id}")
 
     grader = LLMGrader()
 
     # Step 1: analysis (issues)
-    analysis = grader.analyze_text(ocr_text, student)
+    analysis = grader.analyze_text(essay_text, student)
     issues = analysis.get("issues", [])
     if not isinstance(issues, list):
         issues = []
 
     # Step 2: summary (grade + summary_feedback)
-    summary = grader.summarize_feedback(ocr_text, issues, student)
+    summary = grader.summarize_feedback(essay_text, issues, student)
 
     # Build final JSON
     final_json = grader.build_final_json(str(student_id), student, issues, summary)
     return final_json
 
 
-def build_students_map_from_rawdata() -> Dict[str, dict]:
+def build_students_map_from_cfg() -> Dict[str, dict]:
     """
-    Helper to build a {student_id: student_dict} map from rawdata.load_students().
-    Used for CLI / manual testing of the LLM pipeline.
-    """
-    import rawdata
+    Helper to build a {student_id: student_dict} map from cfg.STUDENTS.
 
-    students = rawdata.load_students()
-    return {str(s["id"]): s for s in students}
+    Each value in cfg.STUDENTS is a full name string "Surname Lastname".
+    We split it into surname / lastname for compatibility with the prompts.
+    """
+    students: Dict[str, dict] = {}
+
+    for sid, full_name in cfg.STUDENTS.items():
+        full_name = str(full_name).strip()
+        parts = full_name.split(maxsplit=1)
+        if len(parts) == 2:
+            surname, lastname = parts
+        elif len(parts) == 1:
+            surname, lastname = parts[0], ""
+        else:
+            surname, lastname = "", ""
+
+        students[str(sid)] = {
+            "id": str(sid),
+            "surname": surname,
+            "lastname": lastname,
+            "full_name": full_name,
+        }
+
+    return students
 
 
 def run_llm_pipeline(raw_ocr_list: List[Tuple[str, str]], students_map: Dict[str, dict]) -> None:
@@ -349,17 +350,15 @@ if __name__ == "__main__":
     """
     CLI test entrypoint:
 
-    - Uses cfg.DEMO_OCR_PAIRS (via ocr_mock.get_demo_ocr_pairs) as the OCR output.
-    - Uses students.json (via rawdata.load_students) to resolve student metadata.
+    - Uses cfg.DEMO_ESSAY_PAIRS as the essay input.
+    - Uses cfg.STUDENTS to resolve student metadata.
     - Runs the full LLM pipeline and writes:
         - Output/{id}.json
         - Final/{id}.final.json (after manual edit step).
     """
-    from ocr_mock import get_demo_ocr_pairs
+    raw_ocr_list = [(str(sid), str(text)) for sid, text in cfg.DEMO_ESSAY_PAIRS]
+    students_map = build_students_map_from_cfg()
 
-    raw_ocr_list = get_demo_ocr_pairs()
-    students_map = build_students_map_from_rawdata()
-
-    print("Running LLM pipeline with demo OCR pairs from cfg.DEMO_OCR_PAIRS...")
+    print("Running LLM pipeline with demo essay pairs from cfg.DEMO_ESSAY_PAIRS...")
     print("Pairs:", raw_ocr_list)
     run_llm_pipeline(raw_ocr_list, students_map)

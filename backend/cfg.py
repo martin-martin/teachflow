@@ -7,10 +7,34 @@ strict JSON output from the model.
 """
 
 # -------------------------------------------------------------
+# STUDENT REGISTRY (id -> "Surname Lastname")
+# -------------------------------------------------------------
+STUDENTS = {
+    "1": "Surname Lastname",
+    "2": "Smith Jane",
+    "3": "Doe John",
+    "4": "Brown Alice",
+    # Add more IDs as needed
+    # "2": "Other Surname Otherlastname",
+}
+
+# -------------------------------------------------------------
+# LLM CONFIG
+# -------------------------------------------------------------
+LLM_MODEL_NAME = "gpt-5.1"
+LLM_SYSTEM_PROMPT = (
+    "You are a strict English teacher. "
+    "Your output must be deterministic, consistent, and strictly JSON without commentary. "
+    "Never include natural language outside JSON. "
+    "Do not add explanations. "
+    "Do not be creative. "
+)
+
+# -------------------------------------------------------------
 # ANALYSIS PROMPT
 # -------------------------------------------------------------
 # Input placeholders:
-#   {{ocr_text}}
+#   {{ocr_text}}  (essay text)
 #   {{full_name}}
 ANALYSIS_PROMPT_TEMPLATE = """
 You must read the following student essay and identify all concrete issues.
@@ -46,7 +70,7 @@ Essay:
 # SUMMARY PROMPT
 # -------------------------------------------------------------
 # Input placeholders:
-#   {{ocr_text}}
+#   {{ocr_text}}  (essay text)
 #   {{issues_json}}
 #   {{surname}}
 #   {{lastname}}
@@ -85,17 +109,16 @@ to simulate the result of OCR for testing the LLM pipeline.
 """
 
 # -------------------------------------------------------------
-# DEMO OCR PAIRS FOR PIPELINE TESTING
+# DEMO ESSAY PAIRS FOR PIPELINE TESTING
 # -------------------------------------------------------------
-# List of (student_id, ocr_text) tuples to drive the LLM pipeline
-# during testing. Edit this in development to simulate different
-# OCR outputs per student.
+# List of (student_id, essay_text) tuples used for demo pipeline runs.
+# Edit this in development to simulate different essay inputs per student.
 #
 # Example:
-# DEMO_OCR_PAIRS = [
+# DEMO_ESSAY_PAIRS = [
 #     ("1", "This is the essay text for student 1."),
 #     ("2", "This is the essay text for student 2.")
 # ]
-DEMO_OCR_PAIRS = [
+DEMO_ESSAY_PAIRS = [
     ("1", "This is a demo essay for student 1. You can change this in cfg.py."),
 ]

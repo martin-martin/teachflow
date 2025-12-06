@@ -1,0 +1,74 @@
+{
+  "student_id": "2",
+  "name": "Smith Jane",
+  "grade": "D",
+  "summary_feedback": "Your writing clearly tells a short story, but there are many grammar and spelling mistakes that make it informal and incorrect for academic work. Focus on correct verb tenses, standard spelling, and proper capitalization of 'I' and sentence beginnings. Try breaking long run-on sentences into shorter, properly punctuated ones.",
+  "issues": [
+    {
+      "type": "grammar",
+      "quote": "yesturday",
+      "comment": "Incorrect spelling of the word.",
+      "correction": "yesterday"
+    },
+    {
+      "type": "grammar",
+      "quote": "i",
+      "comment": "Pronoun 'I' must be capitalized.",
+      "correction": "I"
+    },
+    {
+      "type": "grammar",
+      "quote": "i dont wanted to walk",
+      "comment": "Incorrect negative and verb tense combination.",
+      "correction": "I didn't want to walk"
+    },
+    {
+      "type": "grammar",
+      "quote": "my friend sayed",
+      "comment": "Incorrect past tense form of the verb 'say'.",
+      "correction": "my friend said"
+    },
+    {
+      "type": "grammar",
+      "quote": "and we go anyways.",
+      "comment": "Incorrect verb tense; should be past tense.",
+      "correction": "and we went anyway."
+    },
+    {
+      "type": "grammar",
+      "quote": "the street was slippy",
+      "comment": "Incorrect or nonstandard adjective form.",
+      "correction": "the street was slippery"
+    },
+    {
+      "type": "grammar",
+      "quote": "we almost falled",
+      "comment": "Incorrect past tense form of the verb 'fall'.",
+      "correction": "we almost fell"
+    },
+    {
+      "type": "grammar",
+      "quote": "tho.",
+      "comment": "Informal contraction inappropriate for formal writing.",
+      "correction": "though."
+    },
+    {
+      "type": "grammar",
+      "quote": "yesturday i was going to the shop but then the rain was like super heavy so i dont wanted to walk anymore",
+      "comment": "Run-on sentence lacking appropriate punctuation.",
+      "correction": "Yesterday I was going to the shop, but then the rain was very heavy, so I didn't want to walk anymore"
+    },
+    {
+      "type": "grammar",
+      "quote": "but my friend sayed its fine and we go anyways.",
+      "comment": "Missing apostrophe in 'it's' and incorrect tense sequence.",
+      "correction": "but my friend said it's fine and we went anyway."
+    },
+    {
+      "type": "grammar",
+      "quote": "yesturday",
+      "comment": "Sentence should begin with a capital letter.",
+      "correction": "Yesterday"
+    }
+  ]
+}
