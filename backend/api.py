@@ -14,11 +14,9 @@ from .llm_pipeline import grade_single_student_essay
 # Path configuration aligned with existing code
 BASE_DIR = Path(__file__).resolve().parent          # teachflow/backend
 PROJECT_ROOT = BASE_DIR.parent                      # teachflow/
-INPUT_DIR = PROJECT_ROOT / "Input"
 DB_MOCKUP_DIR = PROJECT_ROOT / "db_mockup"
 
 # Make sure folders exist
-INPUT_DIR.mkdir(parents=True, exist_ok=True)
 DB_MOCKUP_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="TeachFlow MVP API", version="0.1.0")
