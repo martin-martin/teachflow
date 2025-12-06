@@ -77,6 +77,25 @@ Issues detected:
 """
 
 # -------------------------------------------------------------
+# OCR / VISION CONFIG
+# -------------------------------------------------------------
+# Vision model to use for OCR
+OCR_MODEL_NAME = "gpt-4o-mini"
+
+# Prompt given to the OpenAI vision model. The goal is VERBATIM OCR.
+OCR_VERBATIM_PROMPT = (
+    "You are an OCR engine. Your only job is to extract text from images of documents.\n"
+    "Extract the text EXACTLY as it appears in the image.\n"
+    "Rules:\n"
+    "1. Do NOT correct spelling or grammar.\n"
+    "2. Do NOT rephrase or rewrite sentences.\n"
+    "3. Do NOT add or remove words.\n"
+    "4. Preserve line breaks and spacing where reasonably possible.\n"
+    "5. If part of a word is unclear, reproduce it as best you can without inventing new words.\n"
+    "6. Do NOT summarize or explain; just output the raw text content.\n"
+)
+
+# -------------------------------------------------------------
 # MOCK OCR TEXT FOR DEV / TESTING
 # -------------------------------------------------------------
 DEMO_OCR_TEXT = """
@@ -99,3 +118,14 @@ to simulate the result of OCR for testing the LLM pipeline.
 DEMO_OCR_PAIRS = [
     ("1", "This is a demo essay for student 1. You can change this in cfg.py."),
 ]
+
+
+
+
+# STUDENT NAMES
+STUDENT_NAMES = {
+    "1": "John Doe",
+    "2": "Jane Smith",
+    "3": "Alice Johnson",
+    "4": "Bob Brown",
+}
