@@ -4,6 +4,8 @@ TeachFlow is an AI-powered grading assistant that helps educators provide struct
 
 This helps teachers save time and focus on teaching!
 
+This repo now ships a FastAPI backend plus a Streamlit UI. The earlier React/Vite frontend was removed to keep the project lightweight.
+
 ## Features
 
 - 📝 **AI-Powered Grading**: Automatic essay analysis using advanced language models
@@ -11,17 +13,13 @@ This helps teachers save time and focus on teaching!
 - ✏️ **Editable Results**: Review and modify AI-generated feedback before finalizing
 - 👥 **Multi-Student Management**: Track and grade multiple students
 - 📊 **Overview Dashboard**: Quick view of all saved grades and feedback
-- 🎨 **Interface**: Currently uses a Streamlit interface, React interface was in the works but not finished by the deadline
+- 🎨 **Interface**: Streamlit app for a simple, ready-to-run workflow
 
 ## Project Structure
 
 ```
 teachflow/
-├── streamlit_app.py      # Streamlit UI application (recommended)
-├── frontend/             # React + Vite web application (alternative UI)
-│   ├── src/              # React components, pages, hooks
-│   ├── public/           # Static assets
-│   └── index.html        # Entry HTML
+├── streamlit_app.py      # Streamlit UI application
 ├── backend/              # FastAPI backend
 │   ├── api.py            # Main FastAPI application
 │   ├── llm_pipeline.py   # LLM grading logic
@@ -37,9 +35,8 @@ teachflow/
 
 ## Prerequisites
 
-- **Python 3.13+** with [uv](https://github.com/astral-sh/uv) package manager
+- **Python 3.13+** with [uv](https://github.com/astral-sh/uv) package manager (only Python dependencies are needed)
 - **OpenAI API Key** for AI-powered grading
-- **Node.js 18+** (only for the React frontend)
 
 ## Getting Started
 
@@ -61,7 +58,7 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ### 3. Start the Backend Server
 
-The backend must be running for both UI options (Streamlit or React):
+The backend must be running for the Streamlit app:
 
 ```bash
 uv run python -m uvicorn backend.api:app --reload
@@ -73,7 +70,7 @@ The API will be available at `http://localhost:8000`
 
 ## Running the Application
 
-### Streamlit App (Currently working)
+### Streamlit App
 
 The Streamlit app provides a working interface for grading essays.
 
@@ -93,18 +90,6 @@ The Streamlit app will open in your browser at `http://localhost:8501`
 5. **Review and edit** the feedback in the editor
 6. **Save** the final feedback
 7. **View all saved grades** in the sidebar "Saved marks overview"
-
-### Option 2: React Frontend (Implementation in progress...)
-
-For a more modern web application experience:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will be available at `http://localhost:8080`
 
 ## API Endpoints
 
@@ -137,17 +122,9 @@ The frontend will be available at `http://localhost:8080`
 - **Streamlit 1.40+** - Interactive web interface
 - **Requests** - API communication
 
-### React Frontend (Alternative)
-- **React 18**
-- **TypeScript**
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **shadcn/ui** - UI component library
-- **React Router** - Navigation
-
 ## Development Workflow
 
-### 1. Running Both Backend and Streamlit
+### Running Backend and Streamlit
 
 **Terminal 1 - Backend:**
 ```bash
@@ -157,19 +134,6 @@ uv run python -m uvicorn backend.api:app --reload
 **Terminal 2 - Streamlit:**
 ```bash
 uv run streamlit run streamlit_app.py
-```
-
-### 2. Running Backend and React Frontend
-
-**Terminal 1 - Backend:**
-```bash
-uv run python -m uvicorn backend.api:app --reload
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
 ```
 
 ## Configuration
