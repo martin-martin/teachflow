@@ -1,0 +1,41 @@
+Student ID: 2025-1187
+Course: CS201 - Data Structures
+Exam: Midterm
+Date: 2025-10-21
+Instructor: Dr. Patel
+
+Problem 1 (Short Answer):
+Q: Define a stack and give one real-world example.
+A: A stack is a FIFO collection supporting push/pop/peek. Example: browser back button history.
+
+Problem 2 (Tracing):
+Q: Show the contents of the queue after enqueueing 3, 5, 7 and dequeuing once.
+Work: Start: [] → enqueue 3 → [3] → enqueue 5 → [3, 5] → enqueue 7 → [3, 5, 7] → dequeue → [5, 7]
+Final queue: [5, 7]
+
+Problem 3 (Complexity):
+Q: What is the time complexity of accessing an element by index in a Python list? Explain briefly.
+A: O(1), because lists are contiguous arrays and the address is computed with pointer arithmetic.
+
+Problem 4 (Code Writing):
+Q: Write a function that returns true if a singly linked list contains a cycle (Floyd’s algorithm).
+A:
+```
+def has_cycle(head):
+    slow = head
+    fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            return True
+    return False
+```
+
+Problem 5 (Short Essay):
+Q: Compare arrays and liked lists in terms of memory layout, random access, and typical use cases.
+A: Arrays use contiguous memory, enable O(1) index access, and fit cache-friendly workloads. Linked lists use scattered nodes, have O(n) index access, but excel at frequent insertions/deletions without shifting elements. Choose arrays for indexing-heavy tasks; choose lists when resizing and splicing dominate.
+
+Extra Scratch Space:
+- TODO: Recheck Problem 3 justification.
+- TODO: Add example for linked list vs array trade-off.
