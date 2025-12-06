@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 from openai import OpenAI
 
-from . import cfg
+import cfg
 
 DEBUG = False  # set True to print raw LLM output
 
@@ -228,7 +228,7 @@ def grade_single_student_essay(student_id: str, ocr_text: str) -> dict:
 
     This does NOT write any files. It is pure logic.
     """
-    from . import rawdata  # local import to avoid circular imports at module load
+    import rawdata  # local import to avoid circular imports at module load
 
     # Load students and build map {id: student_dict}
     students = rawdata.load_students()
@@ -259,11 +259,7 @@ def build_students_map_from_rawdata() -> Dict[str, dict]:
     Helper to build a {student_id: student_dict} map from rawdata.load_students().
     Used for CLI / manual testing of the LLM pipeline.
     """
-    try:
-        from . import rawdata
-    except ImportError:
-        # Fallback if relative import fails (e.g. running as script)
-        import rawdata  # type: ignore
+    import rawdata
 
     students = rawdata.load_students()
     return {str(s["id"]): s for s in students}
@@ -359,11 +355,7 @@ if __name__ == "__main__":
         - Output/{id}.json
         - Final/{id}.final.json (after manual edit step).
     """
-    try:
-        from .ocr_mock import get_demo_ocr_pairs
-    except ImportError:
-        # Fallback if relative import fails (e.g. running as script)
-        from ocr_mock import get_demo_ocr_pairs  # type: ignore
+    from ocr_mock import get_demo_ocr_pairs
 
     raw_ocr_list = get_demo_ocr_pairs()
     students_map = build_students_map_from_rawdata()

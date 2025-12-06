@@ -4,8 +4,8 @@ from typing import Dict
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 
-from .llm_pipeline import grade_single_student_essay
-from .ocr_mock import run_ocr_mock_for_id
+from llm_pipeline import grade_single_student_essay
+from ocr_mock import run_ocr_mock_for_id
 
 # Path configuration aligned with existing code
 BASE_DIR = Path(__file__).resolve().parent          # teachflow/backend

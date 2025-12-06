@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple
-from . import cfg
+import cfg
 
 
 

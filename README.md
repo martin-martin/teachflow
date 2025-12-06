@@ -12,11 +12,13 @@ root/
 │   ├── public/        # Static assets
 │   ├── index.html     # Entry HTML
 │   └── package.json   # Frontend dependencies
-├── backend/           # Express.js backend API
-│   ├── src/           # Server source code
-│   │   ├── routes/    # API route handlers
-│   │   └── index.ts   # Server entry point
-│   └── package.json   # Backend dependencies
+├── backend/           # FastAPI backend
+│   ├── api.py         # Main FastAPI application
+│   ├── llm_pipeline.py# LLM grading logic
+│   ├── cfg.py         # Configuration
+│   ├── ocr_mock.py    # OCR mock for testing
+│   └── rawdata.py     # Data utilities
+├── pyproject.toml     # Python dependencies
 └── README.md          # This file
 ```
 
@@ -24,8 +26,24 @@ root/
 
 ### Prerequisites
 
-- Node.js 18+ (recommend using [nvm](https://github.com/nvm-sh/nvm))
-- npm or bun
+- **Python 3.13+** (using uv for package management)
+- **Node.js 18+** (recommend using [nvm](https://github.com/nvm-sh/nvm))
+- npm
+
+### Running the Backend (FastAPI)
+
+```bash
+# Install Python dependencies (using uv)
+uv sync
+
+# Start the FastAPI server
+cd backend
+python -m uvicorn api:app --reload
+```
+
+The backend API will be available at `http://localhost:8000`
+
+**API Documentation:** Visit `http://localhost:8000/docs` for interactive API documentation
 
 ### Running the Frontend
 
@@ -37,38 +55,39 @@ npm run dev
 
 The frontend will be available at `http://localhost:8080`
 
-### Running the Backend
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-The backend API will be available at `http://localhost:3000`
-
 ### Running Both (Development)
 
 Open two terminal windows:
 
 **Terminal 1 - Backend:**
 ```bash
-cd backend && npm run dev
+cd backend
+python -m uvicorn api:app --reload
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
-cd frontend && npm run dev
+cd frontend
+npm run dev
 ```
 
 ## API Endpoints
 
-### OCR Endpoints
-- `POST /api/ocr/extract-text` - Extract text from uploaded PDF
-- `POST /api/ocr/extract-name` - Extract student name from PDF header
+### Submissions
+- `POST /submissions/{student_id}` - Upload PDF and generate AI feedback
+  - Accepts PDF file upload
+  - Runs OCR extraction
+  - Generates LLM-based grading
+  - Returns feedback JSON
 
-### Feedback Endpoints
-- `POST /api/feedback/generate` - Generate AI feedback for submission
+### Feedback
+- `PATCH /feedback/{student_id}` - Update/edit feedback for a student
+  - Requires `grade` and `summary_feedback` fields
+  - Updates saved feedback JSON
+
+### Results
+- `GET /results/{student_id}` - Retrieve saved feedback for a student
+  - Returns the final graded JSON
 
 ## Tech Stack
 
@@ -82,20 +101,23 @@ cd frontend && npm run dev
 - React Router
 
 ### Backend
-- Node.js
-- Express.js
-- TypeScript
-- Zod (validation)
+- Python 3.13
+- FastAPI
+- OpenAI API (for LLM grading)
+- python-multipart (file uploads)
 
 ## Features
 
 - PDF upload and OCR text extraction
-- Automatic student name detection and matching
+- Automatic student grading using LLM
 - AI-powered feedback generation
 - Structured rubric-based grading
-- Editable OCR text correction
+- Editable feedback correction
 - Student progress tracking
 
-## Note
+## Development Notes
 
-⚠️ **This monorepo structure is designed for external deployment.** The Lovable preview will not work with this structure. For local development, run both frontend and backend separately as described above.
+- The frontend proxies API requests to the backend via Vite's proxy configuration
+- Frontend runs on port 8080, backend on port 8000
+- OCR is currently mocked (see `ocr_mock.py`) for development
+- Graded submissions are saved in the `Final/` directory
