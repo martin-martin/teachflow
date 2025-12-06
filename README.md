@@ -1,6 +1,8 @@
 # TeachFlow – AI-Powered Essay Grading Assistant
 
-TeachFlow is an AI-powered grading assistant that helps educators provide structured, consistent feedback on student essays. The application uses OpenAI's language models to analyze student submissions and generate detailed feedback based on grammar, vocabulary, content, and structure.
+TeachFlow is an AI-powered grading assistant that helps educators provide structured, consistent feedback on student exams. The application analyzes student submissions with LLM support, generates feedback, and highlights suspected incorrect answers for the teacher to review.
+
+This helps teachers save time and focus on teaching!
 
 ## Features
 
@@ -9,7 +11,7 @@ TeachFlow is an AI-powered grading assistant that helps educators provide struct
 - ✏️ **Editable Results**: Review and modify AI-generated feedback before finalizing
 - 👥 **Multi-Student Management**: Track and grade multiple students
 - 📊 **Overview Dashboard**: Quick view of all saved grades and feedback
-- 🎨 **Multiple Interfaces**: Choose between a modern React web app or a Streamlit interface
+- 🎨 **Interface**: Currently uses a Streamlit interface, React interface was in the works but not finished by the deadline
 
 ## Project Structure
 
@@ -36,8 +38,8 @@ teachflow/
 ## Prerequisites
 
 - **Python 3.13+** with [uv](https://github.com/astral-sh/uv) package manager
-- **Node.js 18+** (only if using the React frontend)
 - **OpenAI API Key** for AI-powered grading
+- **Node.js 18+** (only for the React frontend)
 
 ## Getting Started
 
@@ -55,7 +57,6 @@ Create a `.env` file in the project root or export environment variables:
 ```bash
 # OpenAI API configuration
 export OPENAI_API_KEY="your-api-key-here"
-export OPENAI_MODEL="gpt-4"  # or gpt-3.5-turbo, gpt-4-turbo, etc.
 ```
 
 ### 3. Start the Backend Server
@@ -63,8 +64,7 @@ export OPENAI_MODEL="gpt-4"  # or gpt-3.5-turbo, gpt-4-turbo, etc.
 The backend must be running for both UI options (Streamlit or React):
 
 ```bash
-cd backend
-python -m uvicorn api:app --reload
+uv run python -m uvicorn backend.api:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -73,13 +73,13 @@ The API will be available at `http://localhost:8000`
 
 ## Running the Application
 
-### Option 1: Streamlit App (Recommended)
+### Streamlit App (Currently working)
 
-The Streamlit app provides a simple, intuitive interface for grading essays.
+The Streamlit app provides a working interface for grading essays.
 
 ```bash
 # From project root
-streamlit run streamlit_app.py
+uv run streamlit run streamlit_app.py
 ```
 
 The Streamlit app will open in your browser at `http://localhost:8501`
@@ -87,14 +87,14 @@ The Streamlit app will open in your browser at `http://localhost:8501`
 **Using the Streamlit App:**
 
 1. **Select a student** from the sidebar dropdown
-2. **Paste the assignment task** (optional) to give context to the AI
+2. **Paste the assignment task** Gives context to ground the AI
 3. **Paste the student's essay** in the text area
 4. **Click "Grade essay"** to get AI-generated feedback
 5. **Review and edit** the feedback in the editor
 6. **Save** the final feedback
 7. **View all saved grades** in the sidebar "Saved marks overview"
 
-### Option 2: React Frontend (Alternative)
+### Option 2: React Frontend (Implementation in progress...)
 
 For a more modern web application experience:
 
@@ -129,9 +129,9 @@ The frontend will be available at `http://localhost:8080`
 
 ### Backend
 - **Python 3.13**
-- **FastAPI** - Modern, fast web framework
+- **FastAPI** - Modern, fast Python web framework
 - **OpenAI API** - LLM-powered grading
-- **python-multipart** - File upload handling
+- **python-multipart** - File upload handling (currently not finished implementation, meant for OCR handwriting recognition)
 
 ### Streamlit App
 - **Streamlit 1.40+** - Interactive web interface
@@ -151,21 +151,19 @@ The frontend will be available at `http://localhost:8080`
 
 **Terminal 1 - Backend:**
 ```bash
-cd backend
-python -m uvicorn api:app --reload
+uv run python -m uvicorn backend.api:app --reload
 ```
 
 **Terminal 2 - Streamlit:**
 ```bash
-streamlit run streamlit_app.py
+uv run streamlit run streamlit_app.py
 ```
 
 ### 2. Running Backend and React Frontend
 
 **Terminal 1 - Backend:**
 ```bash
-cd backend
-python -m uvicorn api:app --reload
+uv run python -m uvicorn backend.api:app --reload
 ```
 
 **Terminal 2 - Frontend:**
@@ -178,7 +176,8 @@ npm run dev
 
 ### Student Roster
 
-Students are managed in `backend/data/students.json`:
+Students are currently managed in `backend/data/students.json`, placeholder meant for
+hooking into an existing teaching system, such as Moodel or WebUNTIS:
 
 ```json
 [
@@ -204,16 +203,16 @@ Customize grading behavior in `backend/cfg.py`:
 ## How It Works
 
 1. **Essay Submission**: Student essays are submitted via the UI (text input or PDF upload)
-2. **AI Analysis**: The backend sends the essay to OpenAI's language model with a structured prompt
+2. **AI Analysis**: The backend sends the essay to a language model with a structured prompt and context
 3. **Feedback Generation**: The AI analyzes the essay and generates:
    - An overall grade
    - Summary feedback
-   - Specific issues categorized by type (Grammar, Vocabulary, Content, Structure)
+   - Specific issues categorized by type (e.g. Grammar, Vocabulary, Content, Structure for writing)
    - Quoted text from the essay
    - Comments explaining each issue
    - Suggested corrections
 4. **Review & Edit**: Teachers can review and modify the AI-generated feedback
-5. **Storage**: Final feedback is saved and can be retrieved later
+5. **Storage**: Final feedback is saved and can be retrieved later, meant to write to printable PDF to hand it back to students
 
 ## Troubleshooting
 
@@ -227,18 +226,11 @@ Customize grading behavior in `backend/cfg.py`:
 - Check the backend terminal for error messages
 - Verify `backend/data/students.json` exists and is valid JSON
 
-### Frontend connection issues
-- Ensure backend is running before starting the frontend
-- Check that ports 8000 (backend) and 8080/8501 (frontend) are not in use
-- Review the Vite proxy configuration in `frontend/vite.config.ts`
-
 ## Future Enhancements
 
-- [ ] Support for multiple assignment types
-- [ ] Batch grading for multiple students
+- [ ] Input from photos with handwriting OCR to actually hook into current teaching reality
+- [ ] RAG workflow to allow uploading context to ground the LLM answers
 - [ ] Export feedback to PDF
-- [ ] Custom rubric templates
-- [ ] Student portal for viewing feedback
 - [ ] Integration with Learning Management Systems (LMS)
 
 ## License
